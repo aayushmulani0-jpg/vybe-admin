@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-vybe-dark: #111111;
+  --color-vybe-neon: #A3FF12;
+  --color-vybe-surface: #1A1A1A;
+  --color-vybe-glass: rgba(255, 255, 255, 0.05);
+  --color-vybe-glassBorder: rgba(255, 255, 255, 0.1);
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-vybe-dark);
+    color: white;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  ::selection {
+    background-color: var(--color-vybe-neon);
+    color: black;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-vybe-glass backdrop-blur-md border border-vybe-glassBorder rounded-2xl shadow-xl;
+  }
+  
+  .neon-text {
+    @apply text-vybe-neon drop-shadow-[0_0_8px_rgba(163,255,18,0.5)];
+  }
+
+  .neon-border {
+    @apply border-vybe-neon shadow-[0_0_10px_rgba(163,255,18,0.3)];
+  }
+  
+  /* Custom Scrollbar for dark theme */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #111111;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #A3FF12;
+  }
+}
