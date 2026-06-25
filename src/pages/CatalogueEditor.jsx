@@ -7,7 +7,7 @@ import Input from '../components/common/Input';
 import { BookOpen, Trash2, Plus, CheckCircle, Globe, X, ArrowLeft, Settings2 } from 'lucide-react';
 
 export default function CatalogueEditor() {
-  const { catalogues, fetchCatalogues, createCatalogue, setLiveCatalogue, deleteCatalogue, addCatalogueItem, removeCatalogueItem, updateCatalogueItem, addPrintPricing, removePrintPricing, updatePrintPricing } = useCatalogueStore();
+  const { catalogues, fetchCatalogues, createCatalogue, setLiveCatalogue, setOfflineCatalogue, deleteCatalogue, addCatalogueItem, removeCatalogueItem, updateCatalogueItem, addPrintPricing, removePrintPricing, updatePrintPricing, saveCatalogue } = useCatalogueStore();
   const { products: globalProducts, fetchProducts } = useProductStore();
   
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function CatalogueEditor() {
 
   // Helper for adding new print pricing row
   const handleAddPrintRow = () => {
-    addPrintPricing(selectedCatId, { sizeName: 'New Size', dimensionsCm: '10x10', price: 0 });
+    addPrintPricing(selectedCatId, { id: 'temp-' + Date.now() + Math.random(), sizeName: 'New Size', dimensionsCm: '10x10', price: 0 });
   };
 
   // --- DETAIL VIEW ---
@@ -52,15 +52,24 @@ export default function CatalogueEditor() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button variant="primary" onClick={() => saveCatalogue(selectedCat.id)}>
+              <CheckCircle className="w-4 h-4 mr-2" /> Save Draft
+            </Button>
             <Button variant="danger" onClick={() => { deleteCatalogue(selectedCat.id); setSelectedCatId(null); }}>
               <Trash2 className="w-4 h-4 mr-2" /> Delete
             </Button>
             {selectedCat.isLive ? (
-              <span className="bg-vybe-neon text-black text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1 h-10">
-                <Globe className="w-3 h-3" /> Live Catalogue
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="bg-vybe-neon text-black text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1 h-10">
+                  <Globe className="w-3 h-3" /> Live
+                </span>
+                <Button variant="ghost" onClick={() => setOfflineCatalogue(selectedCat.id)}>Take Offline</Button>
+              </div>
             ) : (
-              <Button variant="secondary" onClick={() => setLiveCatalogue(selectedCat.id)}>Publish as Live</Button>
+              <Button variant="secondary" onClick={() => {
+                // To safely publish, first save the draft, then publish it
+                saveCatalogue(selectedCat.id).then(() => setLiveCatalogue(selectedCat.id));
+              }}>Publish as Live</Button>
             )}
           </div>
         </div>
@@ -141,14 +150,16 @@ export default function CatalogueEditor() {
             <GlassCard className="p-4 space-y-4">
               <p className="text-xs text-gray-400 mb-4">Set pricing rules for custom prints applied to blanks in this catalogue.</p>
               
-              {selectedCat.printPricing.map((pricing) => (
-                <div key={pricing.id} className="grid grid-cols-12 gap-2 items-center bg-vybe-dark p-3 rounded-lg border border-vybe-glassBorder">
+              {selectedCat.printPricing.map((pricing) => {
+                const pId = pricing._id || pricing.id;
+                return (
+                <div key={pId} className="grid grid-cols-12 gap-2 items-center bg-vybe-dark p-3 rounded-lg border border-vybe-glassBorder">
                   <div className="col-span-5">
                     <label className="text-[10px] text-gray-500 uppercase tracking-wider mb-1 block">Size Name</label>
                     <input 
                       type="text" 
                       value={pricing.sizeName}
-                      onChange={(e) => updatePrintPricing(selectedCat.id, pricing.id, { sizeName: e.target.value })}
+                      onChange={(e) => updatePrintPricing(selectedCat.id, pId, { sizeName: e.target.value })}
                       className="w-full bg-transparent border-b border-gray-700 text-sm text-white focus:border-vybe-neon focus:outline-none pb-1"
                     />
                   </div>
@@ -157,7 +168,7 @@ export default function CatalogueEditor() {
                     <input 
                       type="text" 
                       value={pricing.dimensionsCm}
-                      onChange={(e) => updatePrintPricing(selectedCat.id, pricing.id, { dimensionsCm: e.target.value })}
+                      onChange={(e) => updatePrintPricing(selectedCat.id, pId, { dimensionsCm: e.target.value })}
                       className="w-full bg-transparent border-b border-gray-700 text-sm text-white focus:border-vybe-neon focus:outline-none pb-1"
                     />
                   </div>
@@ -166,17 +177,17 @@ export default function CatalogueEditor() {
                     <input 
                       type="number" 
                       value={pricing.price}
-                      onChange={(e) => updatePrintPricing(selectedCat.id, pricing.id, { price: Number(e.target.value) })}
+                      onChange={(e) => updatePrintPricing(selectedCat.id, pId, { price: Number(e.target.value) })}
                       className="w-full bg-transparent border-b border-gray-700 text-sm text-white focus:border-vybe-neon focus:outline-none pb-1"
                     />
                   </div>
                   <div className="col-span-1 text-right pt-4">
-                    <button onClick={() => removePrintPricing(selectedCat.id, pricing.id)} className="text-gray-500 hover:text-red-400">
+                    <button onClick={() => removePrintPricing(selectedCat.id, pId)} className="text-gray-500 hover:text-red-400">
                       <X className="w-4 h-4 inline" />
                     </button>
                   </div>
                 </div>
-              ))}
+              )})}
 
               {selectedCat.printPricing.length === 0 && (
                 <div className="text-center py-6 text-gray-500 text-sm border border-dashed border-gray-700 rounded-lg">

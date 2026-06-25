@@ -29,19 +29,63 @@ export default function Inventory() {
     comparePrice: '',
     stockStatus: 'In Stock',
     discountBadge: '',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=400'
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=400',
+    images: [],
+    sizes: [],
+    colors: [],
+    allowCustomPrint: false
   });
+
+  const [colorInput, setColorInput] = useState('#000000');
+
+  const handleAddColor = () => {
+    if (!newProduct.colors.includes(colorInput)) {
+      setNewProduct(prev => ({ ...prev, colors: [...prev.colors, colorInput] }));
+    }
+  };
+
+  const handleRemoveColor = (colorToRemove) => {
+    setNewProduct(prev => ({ ...prev, colors: prev.colors.filter(c => c !== colorToRemove) }));
+  };
+
+  const handleSizeToggle = (size) => {
+    setNewProduct(prev => ({
+      ...prev,
+      sizes: prev.sizes.includes(size) 
+        ? prev.sizes.filter(s => s !== size)
+        : [...prev.sizes, size]
+    }));
+  };
 
   const handleAdd = (e) => {
     e.preventDefault();
-    if (!newProduct.name || !newProduct.price) return;
+    
+    // Strict validation
+    if (!newProduct.name || !newProduct.price || !newProduct.comparePrice) {
+      alert("Please fill in all price and name fields.");
+      return;
+    }
+    if (newProduct.sizes.length === 0) {
+      alert("Please select at least one size.");
+      return;
+    }
+    if (newProduct.colors.length === 0) {
+      alert("Please add at least one color.");
+      return;
+    }
+    if (!newProduct.image) {
+      alert("Please upload a product image.");
+      return;
+    }
+
     addProduct({
       ...newProduct,
       price: Number(newProduct.price),
       comparePrice: newProduct.comparePrice ? Number(newProduct.comparePrice) : null,
+      images: newProduct.images.filter(img => img.trim() !== '') // Clean empty URLs
     });
     setShowAddForm(false);
-    setNewProduct({ name: '', price: '', comparePrice: '', stockStatus: 'In Stock', discountBadge: '', image: newProduct.image });
+    setNewProduct({ name: '', price: '', comparePrice: '', stockStatus: 'In Stock', discountBadge: '', image: newProduct.image, images: [], sizes: [], colors: [], allowCustomPrint: false });
   };
 
   return (
@@ -78,31 +122,143 @@ export default function Inventory() {
                     type="number" 
                     placeholder="1499" 
                     value={newProduct.price}
-                    onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                    onChange={(e) => {
+                      const price = e.target.value;
+                      setNewProduct(prev => {
+                        const compare = prev.comparePrice;
+                        const discount = (compare && price && Number(price) < Number(compare)) ? Math.round(((Number(compare) - Number(price)) / Number(compare)) * 100) : '';
+                        return { ...prev, price, discountBadge: discount ? `${discount}% OFF` : '' };
+                      });
+                    }}
                     required 
                   />
                   <Input 
-                    label="Compare Price (₹)" 
+                    label="Original Price (₹)" 
                     type="number" 
                     placeholder="1999" 
                     value={newProduct.comparePrice}
-                    onChange={(e) => setNewProduct({ ...newProduct, comparePrice: e.target.value })}
+                    onChange={(e) => {
+                      const comparePrice = e.target.value;
+                      setNewProduct(prev => {
+                        const price = prev.price;
+                        const discount = (comparePrice && price && Number(price) < Number(comparePrice)) ? Math.round(((Number(comparePrice) - Number(price)) / Number(comparePrice)) * 100) : '';
+                        return { ...prev, comparePrice, discountBadge: discount ? `${discount}% OFF` : '' };
+                      });
+                    }}
+                    required
                   />
                 </div>
                 <Input 
-                  label="Discount Badge Text" 
-                  placeholder="e.g. 20% OFF" 
-                  value={newProduct.discountBadge}
-                  onChange={(e) => setNewProduct({ ...newProduct, discountBadge: e.target.value })}
+                  label="Discount (%)" 
+                  placeholder="e.g. 20" 
+                  value={newProduct.discountBadge.replace(/[^0-9]/g, '')}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^0-9]/g, '');
+                    const discount = Number(val);
+                    setNewProduct(prev => {
+                      const comparePrice = prev.comparePrice;
+                      if (comparePrice && val) {
+                        const price = Math.round(Number(comparePrice) * (1 - discount / 100));
+                        return { ...prev, price: String(price), discountBadge: `${val}% OFF` };
+                      }
+                      return { ...prev, discountBadge: val ? `${val}% OFF` : '' };
+                    });
+                  }}
                 />
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Available Sizes</label>
+                  <div className="flex gap-2">
+                    {['S', 'M', 'L', 'XL'].map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => handleSizeToggle(size)}
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center font-medium transition-colors ${
+                          newProduct.sizes?.includes(size)
+                            ? 'bg-vybe-neon text-black'
+                            : 'bg-vybe-dark text-gray-400 border border-vybe-glassBorder hover:border-vybe-neon'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Available Colors</label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input 
+                      type="color" 
+                      value={colorInput}
+                      onChange={(e) => setColorInput(e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer bg-transparent border-0 p-0"
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={handleAddColor}>Add Color</Button>
+                  </div>
+                  {newProduct.colors?.length > 0 && (
+                    <div className="flex gap-2 flex-wrap">
+                      {newProduct.colors.map(color => (
+                        <div key={color} className="relative group cursor-pointer" onClick={() => handleRemoveColor(color)} title="Click to remove">
+                          <div className="w-6 h-6 rounded border border-gray-600" style={{ backgroundColor: color }}></div>
+                          <div className="absolute inset-0 bg-red-500/80 rounded opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <Trash2 className="w-3 h-3 text-white" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Right Column */}
               <div className="space-y-4">
-                <ImageDropzone 
-                  value={newProduct.image}
-                  onChange={(url) => setNewProduct({ ...newProduct, image: url })}
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Display Picture (Main)</label>
+                  <ImageDropzone 
+                    value={newProduct.image}
+                    onChange={(url) => setNewProduct({ ...newProduct, image: url })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-400 mb-1">Extra Images</label>
+                  <div className="space-y-2">
+                    {newProduct.images.map((img, idx) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <Input 
+                          placeholder="Image URL" 
+                          value={img} 
+                          onChange={(e) => {
+                            const newImages = [...newProduct.images];
+                            newImages[idx] = e.target.value;
+                            setNewProduct({ ...newProduct, images: newImages });
+                          }} 
+                        />
+                        <button type="button" onClick={() => {
+                          const newImages = newProduct.images.filter((_, i) => i !== idx);
+                          setNewProduct({ ...newProduct, images: newImages });
+                        }} className="p-2 bg-red-500/10 text-red-500 rounded hover:bg-red-500/20">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={() => setNewProduct({ ...newProduct, images: [...newProduct.images, ''] })}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Extra Image
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <label className="flex items-center gap-2 cursor-pointer bg-vybe-dark p-3 rounded-lg border border-vybe-glassBorder hover:border-vybe-neon transition-colors">
+                    <input 
+                      type="checkbox"
+                      checked={newProduct.allowCustomPrint}
+                      onChange={(e) => setNewProduct({ ...newProduct, allowCustomPrint: e.target.checked })}
+                      className="w-4 h-4 accent-vybe-neon"
+                    />
+                    <span className="text-sm font-medium text-white">Allow Custom Prints on this Product</span>
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1 pl-1">If checked, users will see the "Want Custom Prints?" button for this product.</p>
+                </div>
               </div>
 
             </div>
@@ -120,6 +276,7 @@ export default function Inventory() {
             <thead className="bg-vybe-dark text-xs uppercase text-gray-400 border-b border-vybe-glassBorder">
               <tr>
                 <th className="px-6 py-4">Product Info</th>
+                <th className="px-6 py-4">Sizes & Colors</th>
                 <th className="px-6 py-4">Selling Price (₹)</th>
                 <th className="px-6 py-4">Original Price (₹)</th>
                 <th className="px-6 py-4">Stock Status</th>
@@ -136,14 +293,51 @@ export default function Inventory() {
                     </div>
                     <div>
                       <p className="line-clamp-1 font-semibold">{product.name}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">ID: {product.id}</p>
+                      <p className="text-xs text-gray-500 mt-0.5 mb-1">ID: {product.id}</p>
+                      <label className="flex items-center gap-1.5 cursor-pointer">
+                        <input 
+                          type="checkbox"
+                          checked={product.allowCustomPrint}
+                          onChange={(e) => updateProduct(product.id, { allowCustomPrint: e.target.checked })}
+                          className="w-3 h-3 accent-vybe-neon"
+                        />
+                        <span className="text-[10px] uppercase tracking-wider text-gray-400">Custom Prints</span>
+                      </label>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="space-y-2">
+                      {product.sizes && product.sizes.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {product.sizes.map(size => (
+                            <span key={size} className="text-[10px] px-1.5 py-0.5 rounded bg-vybe-dark text-gray-300 border border-gray-600">{size}</span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-500 block">-</span>
+                      )}
+                      
+                      {product.colors && product.colors.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {product.colors.map(color => (
+                            <div key={color} className="w-3 h-3 rounded-full border border-gray-600" style={{ backgroundColor: color }} title={color}></div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4">
                     <input 
                       type="number"
                       value={product.price}
-                      onChange={(e) => updateProduct(product.id, { price: Number(e.target.value) })}
+                      onChange={(e) => {
+                        const newPrice = Number(e.target.value);
+                        const updates = { price: newPrice };
+                        if (product.comparePrice && newPrice < product.comparePrice) {
+                          updates.discountBadge = Math.round(((product.comparePrice - newPrice) / product.comparePrice) * 100) + '% OFF';
+                        }
+                        updateProduct(product.id, updates);
+                      }}
                       className="w-20 bg-transparent border-b border-gray-600 focus:border-vybe-neon focus:outline-none text-white pb-1"
                     />
                   </td>
@@ -152,7 +346,14 @@ export default function Inventory() {
                       type="number"
                       value={product.comparePrice || ''}
                       placeholder="N/A"
-                      onChange={(e) => updateProduct(product.id, { comparePrice: Number(e.target.value) })}
+                      onChange={(e) => {
+                        const newComparePrice = Number(e.target.value);
+                        const updates = { comparePrice: newComparePrice };
+                        if (newComparePrice && product.price && product.price < newComparePrice) {
+                          updates.discountBadge = Math.round(((newComparePrice - product.price) / newComparePrice) * 100) + '% OFF';
+                        }
+                        updateProduct(product.id, updates);
+                      }}
                       className="w-20 bg-transparent border-b border-gray-600 focus:border-vybe-neon focus:outline-none text-gray-400 pb-1"
                     />
                   </td>
@@ -171,11 +372,19 @@ export default function Inventory() {
                   <td className="px-6 py-4">
                     <input 
                       type="text" 
-                      value={product.discountBadge || ''}
-                      onChange={(e) => updateProduct(product.id, { discountBadge: e.target.value })}
-                      placeholder="No Badge"
-                      className="bg-vybe-dark border border-transparent hover:border-vybe-glassBorder rounded px-2 py-1 text-sm w-24 focus:outline-none focus:border-vybe-neon text-white transition-colors"
-                    />
+                      value={product.discountBadge ? product.discountBadge.replace(/[^0-9]/g, '') : ''}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        const newDiscount = Number(val);
+                        const updates = { discountBadge: val ? `${val}% OFF` : '' };
+                        if (product.comparePrice && val) {
+                          updates.price = Math.round(product.comparePrice * (1 - newDiscount / 100));
+                        }
+                        updateProduct(product.id, updates);
+                      }}
+                      placeholder="%"
+                      className="bg-vybe-dark border border-transparent hover:border-vybe-glassBorder rounded px-2 py-1 text-sm w-16 focus:outline-none focus:border-vybe-neon text-white transition-colors"
+                    /> <span className="text-gray-400 text-xs">%</span>
                   </td>
                   <td className="px-6 py-4">
                     <button onClick={() => deleteProduct(product.id)} className="p-2 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10" title="Delete Product">

@@ -68,6 +68,16 @@ router.put('/:id/live', async (req, res) => {
   }
 });
 
+// Set Catalogue Offline
+router.put('/:id/offline', async (req, res) => {
+  try {
+    const offlineCatalogue = await Catalogue.findByIdAndUpdate(req.params.id, { isLive: false }, { new: true });
+    res.json(offlineCatalogue);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Delete catalogue
 router.delete('/:id', async (req, res) => {
   try {

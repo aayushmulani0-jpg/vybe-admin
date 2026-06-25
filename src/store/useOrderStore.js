@@ -28,31 +28,27 @@ export const useOrderStore = create((set, get) => ({
     }
   },
 
-  updateRetailStatus: async (id, newStatus) => {
+  updateOrderDetails: async (id, orderType, updateData) => {
     try {
-      await fetch(`${API_URL}/${id}/status`, {
+      const res = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(updateData),
       });
-      set((state) => ({
-        retailOrders: state.retailOrders.map(o => o.id === id ? { ...o, status: newStatus } : o)
-      }));
-    } catch (error) {
-      console.error(error);
-    }
-  },
-
-  updateWholesaleStatus: async (id, newStatus) => {
-    try {
-      await fetch(`${API_URL}/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+      const updatedOrder = await res.json();
+      
+      set((state) => {
+        if (orderType === 'Retail') {
+          return {
+            retailOrders: state.retailOrders.map(o => o.id === id ? { ...o, ...updatedOrder, id: updatedOrder._id } : o)
+          };
+        } else if (orderType === 'Wholesale') {
+          return {
+            wholesaleOrders: state.wholesaleOrders.map(o => o.id === id ? { ...o, ...updatedOrder, id: updatedOrder._id } : o)
+          };
+        }
+        return state;
       });
-      set((state) => ({
-        wholesaleOrders: state.wholesaleOrders.map(o => o.id === id ? { ...o, status: newStatus } : o)
-      }));
     } catch (error) {
       console.error(error);
     }

@@ -1,14 +1,15 @@
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingCart, 
-  Truck, 
-  Users, 
-  Palette, 
-  Settings, 
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  Truck,
+  Users,
+  Palette,
+  Settings,
   BookOpen,
-  FileText
+  FileText,
+  DollarSign
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -19,9 +20,11 @@ const NAV_ITEMS = [
   { name: 'Retail Orders', path: '/retail-orders', icon: ShoppingCart },
   { name: 'Wholesale Orders', path: '/wholesale-orders', icon: Package },
   { name: 'Custom Print', path: '/custom-print', icon: Palette },
+  { name: 'Print Templates', path: '/templates', icon: Palette },
   { name: 'Wholesale Catalogues', path: '/catalogues', icon: BookOpen },
   { name: 'Customers', path: '/customers', icon: Users },
   { name: 'Quotations', path: '/quotes', icon: FileText },
+  { name: 'Global Pricing', path: '/pricing', icon: DollarSign },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
 
@@ -45,10 +48,9 @@ export default function Sidebar() {
               key={item.name}
               to={item.path}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${
-                  isActive 
-                    ? 'text-vybe-dark bg-vybe-neon font-medium shadow-[0_0_15px_rgba(163,255,18,0.2)]' 
-                    : 'text-gray-400 hover:text-white hover:bg-vybe-glass'
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative ${isActive
+                  ? 'text-vybe-dark bg-vybe-neon font-medium shadow-[0_0_15px_rgba(163,255,18,0.2)]'
+                  : 'text-gray-400 hover:text-white hover:bg-vybe-glass'
                 }`
               }
             >
@@ -57,7 +59,7 @@ export default function Sidebar() {
                   <Icon className={`w-5 h-5 ${isActive ? 'text-vybe-dark' : 'group-hover:text-vybe-neon transition-colors'}`} />
                   <span>{item.name}</span>
                   {isActive && (
-                    <motion.div 
+                    <motion.div
                       layoutId="sidebar-active"
                       className="absolute inset-0 bg-vybe-neon rounded-lg -z-10"
                       transition={{ type: "spring", stiffness: 300, damping: 30 }}

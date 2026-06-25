@@ -8,6 +8,10 @@ const productSchema = new mongoose.Schema({
   discountBadge: { type: String },
   image: { type: String, required: true },
   description: { type: String },
+  sizes: [{ type: String, enum: ['S', 'M', 'L', 'XL'] }],
+  colors: [{ type: String }],
+  images: [{ type: String }],
+  allowCustomPrint: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 

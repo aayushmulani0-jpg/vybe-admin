@@ -7,6 +7,8 @@ import RetailOrders from './pages/RetailOrders';
 import WholesaleOrders from './pages/WholesaleOrders';
 import CustomPrint from './pages/CustomPrint';
 import CatalogueEditor from './pages/CatalogueEditor';
+import Pricing from './pages/Pricing';
+import Customers from './pages/Customers';
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <Route path="wholesale-orders" element={<WholesaleOrders />} />
         <Route path="custom-print" element={<CustomPrint />} />
         <Route path="catalogues" element={<CatalogueEditor />} />
+        <Route path="pricing" element={<Pricing />} />
+        <Route path="customers" element={<Customers />} />
         {/* We will add other routes here (Settings, etc.) */}
       </Route>
     </Routes>

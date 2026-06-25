@@ -7,8 +7,15 @@ const orderItemSchema = new mongoose.Schema({
   price: { type: Number },
   image: { type: String },
   sizeName: { type: String },
+  selectedSize: { type: String },
+  selectedColor: { type: String },
+  selectedPrints: [{
+    name: { type: String },
+    cost: { type: Number }
+  }],
   customPrintPrice: { type: Number, default: 0 },
-  itemTotal: { type: Number }
+  itemTotal: { type: Number },
+  uploadedImages: { type: Object }
 });
 
 const orderSchema = new mongoose.Schema({
@@ -16,12 +23,26 @@ const orderSchema = new mongoose.Schema({
   
   // Shared fields
   customer: { type: String },
+  email: { type: String },
+  phone: { type: String },
   date: { type: String },
   total: { type: Number },
   status: { type: String },
   items: { type: Number },
   shippingAddress: { type: String },
   itemsList: [orderItemSchema],
+
+  // Financials
+  paymentMethod: { type: String, default: 'Cash on Delivery' },
+  paymentStatus: { type: String, enum: ['Pending', 'Paid', 'Failed'], default: 'Pending' },
+
+  // Logistics
+  shippingDetails: {
+    courier: { type: String },
+    trackingNumber: { type: String },
+    trackingUrl: { type: String },
+    estimatedDelivery: { type: Date }
+  },
 
   // Wholesale specific
   company: { type: String },

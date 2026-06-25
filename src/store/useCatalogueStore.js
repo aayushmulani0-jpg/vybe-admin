@@ -49,6 +49,21 @@ export const useCatalogueStore = create((set, get) => ({
     }
   },
 
+  setOfflineCatalogue: async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/${id}/offline`, { method: 'PUT' });
+      const updatedCat = await res.json();
+      set((state) => ({
+        catalogues: state.catalogues.map(c => ({
+          ...c,
+          isLive: c.id === id ? false : c.isLive
+        }))
+      }));
+    } catch (error) {
+      console.error(error);
+    }
+  },
+
   deleteCatalogue: async (id) => {
     try {
       await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
@@ -60,16 +75,19 @@ export const useCatalogueStore = create((set, get) => ({
     }
   },
 
-  // Helper to sync a catalogue update to the backend
-  syncCatalogueUpdate: async (id, updatedCatalogue) => {
+  // Helper to sync a catalogue update to the backend manually
+  saveCatalogue: async (id) => {
+    const cat = get().catalogues.find(c => c.id === id);
     try {
       await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedCatalogue),
+        body: JSON.stringify(cat),
       });
+      alert('Catalogue saved successfully!');
     } catch (error) {
       console.error(error);
+      alert('Failed to save catalogue');
     }
   },
 
@@ -77,14 +95,12 @@ export const useCatalogueStore = create((set, get) => ({
     const cat = get().catalogues.find(c => c.id === catalogueId);
     const updatedCat = { ...cat, items: [...cat.items, { productId, wholesalePrice: basePrice, moq: 10 }] };
     set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
-    get().syncCatalogueUpdate(catalogueId, updatedCat);
   },
 
   removeCatalogueItem: (catalogueId, productId) => {
     const cat = get().catalogues.find(c => c.id === catalogueId);
     const updatedCat = { ...cat, items: cat.items.filter(i => i.productId !== productId && i.productId?._id !== productId) };
     set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
-    get().syncCatalogueUpdate(catalogueId, updatedCat);
   },
 
   updateCatalogueItem: (catalogueId, productId, updates) => {
@@ -94,21 +110,18 @@ export const useCatalogueStore = create((set, get) => ({
       items: cat.items.map(i => (i.productId === productId || i.productId?._id === productId) ? { ...i, ...updates } : i) 
     };
     set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
-    get().syncCatalogueUpdate(catalogueId, updatedCat);
   },
 
   addPrintPricing: (catalogueId, pricingObj) => {
     const cat = get().catalogues.find(c => c.id === catalogueId);
     const updatedCat = { ...cat, printPricing: [...cat.printPricing, pricingObj] };
     set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
-    get().syncCatalogueUpdate(catalogueId, updatedCat);
   },
 
   removePrintPricing: (catalogueId, pricingId) => {
     const cat = get().catalogues.find(c => c.id === catalogueId);
     const updatedCat = { ...cat, printPricing: cat.printPricing.filter(p => p._id !== pricingId && p.id !== pricingId) };
     set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
-    get().syncCatalogueUpdate(catalogueId, updatedCat);
   },
 
   updatePrintPricing: (catalogueId, pricingId, updates) => {
@@ -118,6 +131,5 @@ export const useCatalogueStore = create((set, get) => ({
       printPricing: cat.printPricing.map(p => (p._id === pricingId || p.id === pricingId) ? { ...p, ...updates } : p) 
     };
     set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
-    get().syncCatalogueUpdate(catalogueId, updatedCat);
   },
 }));
