@@ -146,6 +146,12 @@ export default function CustomPrint() {
                     </div>
                   </div>
                   <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="text-gray-400">Print Areas</span>
+                    <span className="font-medium text-white text-right max-w-[200px] break-words">
+                      {selectedOrder.itemsList?.[0]?.selectedPrints?.map(p => p.name).join(', ') || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
                     <span className="text-gray-400">Total Value</span>
                     <span className="font-bold text-vybe-neon">₹{selectedOrder.total?.toLocaleString() || (selectedOrder.quantity * selectedOrder.price).toLocaleString()}</span>
                   </div>

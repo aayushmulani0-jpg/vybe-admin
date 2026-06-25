@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
-import { Package, Eye, Send, X, CheckCircle, Truck, Clock, CreditCard, Building2 } from 'lucide-react';
+import { Package, Eye, Send, X, CheckCircle, Truck, Clock, CreditCard, Building2, Download } from 'lucide-react';
+import MockupViewer from '../components/custom-print/MockupViewer';
 
 export default function WholesaleOrders() {
   const { wholesaleOrders, updateOrderDetails, fetchOrders } = useOrderStore();
@@ -118,136 +119,140 @@ export default function WholesaleOrders() {
 
       {/* Details Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[#1A1A1A] w-full max-w-5xl min-h-[80vh] border border-white/10 rounded-xl shadow-2xl relative flex flex-col my-8">
-            {/* Header */}
-            <div className="p-6 border-b border-white/10 flex justify-between items-start sticky top-0 bg-[#1A1A1A] z-10 rounded-t-xl">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-2xl font-bold text-white">B2B Order #{selectedOrder.id.slice(-8).toUpperCase()}</h2>
-                  <span className="bg-vybe-neon/10 text-vybe-neon border border-vybe-neon/30 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">Wholesale</span>
-                </div>
-                <div className="flex gap-4 text-sm text-gray-400">
-                  <span>Placed on {selectedOrder.date}</span>
-                  <span>•</span>
-                  <span>{selectedOrder.items} Total Units</span>
-                  <span>•</span>
-                  <span className="font-semibold text-vybe-neon">Quoted Value: ₹{selectedOrder.total?.toLocaleString() || 0}</span>
-                </div>
-              </div>
-              <button onClick={() => setSelectedOrder(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-10 custom-scrollbar">
+          <GlassCard className="w-full max-w-4xl p-6 relative">
+            <button 
+              onClick={() => setSelectedOrder(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <div className="flex items-center gap-3 mb-6">
+              <h2 className="text-xl font-bold text-white">B2B Order: {selectedOrder.id.slice(-8).toUpperCase()}</h2>
+              <span className="bg-vybe-neon/10 text-vybe-neon border border-vybe-neon/30 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">Wholesale</span>
             </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Visualizer Component */}
+              <MockupViewer order={selectedOrder} />
 
-            <div className="p-6 flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 xl:grid-cols-3 gap-6">
-              
-              {/* Left Column: Items */}
-              <div className="xl:col-span-2 space-y-6">
-                <div className="bg-black/20 rounded-lg border border-white/5 overflow-hidden">
-                  <div className="p-4 border-b border-white/5 bg-white/[0.02]">
-                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Order Manifest</h3>
+              {/* Order Metadata & Actions */}
+              <div className="flex flex-col justify-between space-y-6">
+                <div className="space-y-4 text-sm">
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="text-gray-400">Company</span>
+                    <span className="font-medium text-white">{selectedOrder.company || 'N/A'}</span>
                   </div>
-                  <div className="divide-y divide-white/5">
-                    {selectedOrder.itemsList && selectedOrder.itemsList.map((item, idx) => (
-                      <div key={idx} className="p-4 flex flex-col sm:flex-row gap-4">
-                        <div className="w-24 h-24 bg-neutral-900 rounded-md border border-white/10 overflow-hidden flex-shrink-0">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-semibold text-white text-lg truncate pr-4">{item.name}</h4>
-                            <span className="font-bold text-vybe-neon whitespace-nowrap">₹{(item.itemTotal || (item.price * item.qty)).toLocaleString()}</span>
-                          </div>
-                          <p className="text-sm text-gray-400 mt-1">
-                            Bulk Quantity: <span className="text-white font-semibold">{item.qty} units</span> @ ₹{item.price}/unit 
-                            <span className="mx-2">|</span> Size: <span className="text-white font-semibold">{item.selectedSize || 'N/A'}</span>
-                          </p>
-                          
-                          {/* Custom Prints Detail */}
-                          {item.selectedPrints && item.selectedPrints.length > 0 && (
-                            <div className="mt-3 bg-neutral-900/50 p-3 rounded border border-white/5">
-                              <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Selected Customizations</p>
-                              <div className="flex flex-wrap gap-2">
-                                {item.selectedPrints.map((p, i) => (
-                                  <span key={i} className="text-xs bg-vybe-neon/10 text-vybe-neon px-2 py-1 rounded border border-vybe-neon/20">
-                                    {p.name} (+₹{p.cost}/unit)
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="text-gray-400">Contact</span>
+                    <span className="font-medium text-white">{selectedOrder.customer || selectedOrder.contact}</span>
+                  </div>
+                  {selectedOrder.email && (
+                    <div className="flex justify-between border-b border-gray-800 pb-2">
+                      <span className="text-gray-400">Email</span>
+                      <span className="font-medium text-white">{selectedOrder.email}</span>
+                    </div>
+                  )}
+                  {selectedOrder.phone && (
+                    <div className="flex justify-between border-b border-gray-800 pb-2">
+                      <span className="text-gray-400">Phone</span>
+                      <span className="font-medium text-white">{selectedOrder.phone}</span>
+                    </div>
+                  )}
+                  {selectedOrder.shippingAddress && (
+                    <div className="flex justify-between border-b border-gray-800 pb-2">
+                      <span className="text-gray-400">Shipping</span>
+                      <span className="font-medium text-white text-right max-w-[200px] break-words">{selectedOrder.shippingAddress}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="text-gray-400">Print Areas</span>
+                    <span className="font-medium text-white text-right max-w-[200px] break-words">
+                      {selectedOrder.itemsList?.[0]?.selectedPrints?.map(p => p.name).join(', ') || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-b border-gray-800 pb-2">
+                    <span className="text-gray-400">Quoted Value</span>
+                    <span className="font-bold text-vybe-neon">₹{selectedOrder.total?.toLocaleString() || (selectedOrder.itemsList ? selectedOrder.itemsList.reduce((sum, item) => sum + (item.itemTotal || (item.price * item.qty)), 0) : 0).toLocaleString()}</span>
+                  </div>
 
-                          {/* Uploaded Designs Gallery */}
-                          {item.uploadedImages && Object.keys(item.uploadedImages).length > 0 && (
-                            <div className="mt-4">
-                              <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Design Files Attached</p>
-                              <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
-                                {Object.entries(item.uploadedImages).map(([zone, url]) => (
-                                  <a key={zone} href={url} target="_blank" rel="noreferrer" className="block relative group flex-shrink-0">
-                                    <div className="w-20 h-20 bg-neutral-900 border border-white/10 rounded overflow-hidden relative group-hover:border-vybe-neon transition-colors">
-                                      <img src={url} alt={zone} className="w-full h-full object-cover group-hover:opacity-30 transition-all" />
-                                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="bg-vybe-neon text-black text-[9px] font-bold px-1.5 py-0.5 rounded uppercase flex items-center gap-1">
-                                          Open
-                                        </span>
+                  {selectedOrder.itemsList && selectedOrder.itemsList.length > 0 && (
+                    <div className="pt-4 border-t border-vybe-glassBorder">
+                      <span className="text-gray-400 text-xs uppercase tracking-wider mb-2 block">Item Breakdown</span>
+                      <div className="space-y-2">
+                        {selectedOrder.itemsList.map((item, idx) => (
+                          <div key={idx} className="bg-vybe-dark p-3 rounded-lg border border-vybe-glassBorder text-xs flex flex-col gap-2">
+                            <div className="flex justify-between">
+                              <span className="text-white font-medium">{item.name}</span>
+                              <span className="text-white font-bold">₹{(item.itemTotal || (item.price * item.qty)).toLocaleString()}</span>
+                            </div>
+                            <div className="text-gray-400 flex justify-between">
+                              <span>Bulk Qty: {item.qty} | Size: {item.selectedSize || 'N/A'}</span>
+                              <span>₹{item.price}/unit</span>
+                            </div>
+                            
+                            {item.selectedPrints && item.selectedPrints.length > 0 && (
+                              <div className="mt-1 pt-2 border-t border-vybe-glassBorder">
+                                <span className="text-gray-500 font-semibold mb-1 block uppercase">Customizations:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {item.selectedPrints.map((p, i) => (
+                                    <span key={i} className="text-[10px] bg-vybe-neon/10 text-vybe-neon px-2 py-0.5 rounded border border-vybe-neon/20">
+                                      {p.name} (+₹{p.cost}/unit)
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {item.uploadedImages && Object.keys(item.uploadedImages).length > 0 && (
+                              <div className="mt-1 pt-2 border-t border-vybe-glassBorder">
+                                <span className="text-gray-500 font-semibold mb-1 block uppercase">Attached Files:</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {Object.entries(item.uploadedImages).map(([zone, url]) => (
+                                    <a 
+                                      key={zone} 
+                                      href={url} 
+                                      target="_blank" 
+                                      rel="noreferrer"
+                                      className="group flex flex-col items-center gap-1 bg-vybe-dark border border-vybe-glassBorder p-1.5 rounded hover:border-vybe-neon transition-colors"
+                                    >
+                                      <div className="relative w-12 h-12 rounded overflow-hidden">
+                                        <img src={url} alt={zone} className="w-full h-full object-cover opacity-80 group-hover:opacity-30 transition-opacity" />
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                          <span className="bg-vybe-neon text-black text-[8px] font-bold px-1 py-0.5 rounded uppercase">
+                                            Open
+                                          </span>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-sm px-2 py-1">
-                                      <p className="text-[9px] text-vybe-neon text-center truncate font-semibold uppercase">{zone}</p>
-                                    </div>
-                                  </a>
-                                ))}
+                                      <span className="text-[9px] text-gray-400 group-hover:text-vybe-neon truncate max-w-full font-semibold">{zone}</span>
+                                    </a>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                    </div>
+                  )}
 
-              {/* Right Column: Customer, Payment, Shipping */}
-              <div className="space-y-6">
-                
-                {/* B2B Client Info */}
-                <div className="bg-black/20 p-5 rounded-lg border border-white/5">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <Building2 className="w-4 h-4" /> Client Details
-                  </h3>
-                  <div className="space-y-3 text-sm">
-                    <div>
-                      <p className="text-gray-500 text-xs mb-0.5">Company Name</p>
-                      <p className="font-medium text-white text-base">{selectedOrder.company || 'N/A'}</p>
+                  {selectedOrder.notes && (
+                    <div className="mt-4 bg-orange-500/10 border border-orange-500/30 p-3 rounded-lg text-orange-300">
+                      <strong className="block text-xs uppercase mb-1">Client Note:</strong>
+                      {selectedOrder.notes}
                     </div>
-                    <div className="pt-2 border-t border-white/5">
-                      <p className="text-gray-500 text-xs mb-0.5">Point of Contact</p>
-                      <p className="font-medium text-white">{selectedOrder.customer || selectedOrder.contact}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 text-xs mb-0.5">Email</p>
-                      <p className="font-medium text-white">{selectedOrder.email}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 text-xs mb-0.5">Phone</p>
-                      <p className="font-medium text-white">{selectedOrder.phone}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500 text-xs mb-0.5">Shipping Address</p>
-                      <p className="font-medium text-white">{selectedOrder.shippingAddress || 'N/A'}</p>
-                    </div>
-                  </div>
+                  )}
+                </div>
+
+                <div className="space-y-3 pt-6 border-t border-vybe-glassBorder">
+                  <Button variant="primary" fullWidth className="justify-center">
+                    <Send className="w-4 h-4 mr-2" /> Send Official Quote / Invoice
+                  </Button>
+                  <Button variant="secondary" fullWidth onClick={() => setSelectedOrder(null)}>Close Window</Button>
                 </div>
               </div>
             </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t border-white/10 bg-black/40 flex justify-end gap-3 rounded-b-xl">
-              <Button variant="secondary" onClick={() => setSelectedOrder(null)}>Close Window</Button>
-              <Button variant="primary"><Send className="w-4 h-4 mr-2" /> Send Official Quote / Invoice</Button>
-            </div>
-          </div>
+          </GlassCard>
         </div>
       )}
     </div>

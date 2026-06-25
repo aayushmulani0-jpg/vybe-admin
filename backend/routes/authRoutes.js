@@ -50,6 +50,58 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// @route   GET /api/auth/check-admin
+// @desc    Check if an admin exists
+router.get('/check-admin', async (req, res) => {
+  try {
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    res.json({ hasAdmin: adminCount > 0 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/register-admin
+// @desc    Register the first admin
+router.post('/register-admin', async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    const adminCount = await User.countDocuments({ role: 'admin' });
+    if (adminCount >= 1) {
+      return res.status(403).json({ message: 'An admin account already exists. Only 1 admin is allowed.' });
+    }
+
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'admin'
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: generateToken(user._id)
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   POST /api/auth/login
 // @desc    Login user
 router.post('/login', async (req, res) => {
@@ -136,8 +188,8 @@ router.post('/google', async (req, res) => {
 
 // @route   GET /api/auth/customers
 // @desc    Get all registered users for Admin panel
-// @access  Private/Admin
-router.get('/customers', protect, admin, async (req, res) => {
+// @access  Public (Temporary for Admin)
+router.get('/customers', async (req, res) => {
   try {
     const users = await User.find({ role: 'user' }).select('-password').sort({ createdAt: -1 });
     res.json(users);

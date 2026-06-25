@@ -16,7 +16,10 @@ router.get('/', async (req, res) => {
 // Get Live Catalogue (User Storefront)
 router.get('/live', async (req, res) => {
   try {
-    const liveCatalogue = await Catalogue.findOne({ isLive: true }).populate('items.productId');
+    const liveCatalogue = await Catalogue.findOne({ isLive: true })
+      .populate('items.productId')
+      .populate('wholesaleTemplates.templateId')
+      .populate('wholesaleLocations.locationId');
     if (!liveCatalogue) {
       return res.status(404).json({ message: 'No live catalogue available.' });
     }

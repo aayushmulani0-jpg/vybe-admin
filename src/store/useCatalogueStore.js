@@ -24,7 +24,7 @@ export const useCatalogueStore = create((set, get) => ({
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, items: [], printPricing: [] }),
+        body: JSON.stringify({ name, items: [], wholesaleLocations: [], wholesaleTemplates: [] }),
       });
       const newCat = await res.json();
       newCat.id = newCat._id;
@@ -112,23 +112,12 @@ export const useCatalogueStore = create((set, get) => ({
     set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
   },
 
-  addPrintPricing: (catalogueId, pricingObj) => {
-    const cat = get().catalogues.find(c => c.id === catalogueId);
-    const updatedCat = { ...cat, printPricing: [...cat.printPricing, pricingObj] };
-    set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
-  },
-
-  removePrintPricing: (catalogueId, pricingId) => {
-    const cat = get().catalogues.find(c => c.id === catalogueId);
-    const updatedCat = { ...cat, printPricing: cat.printPricing.filter(p => p._id !== pricingId && p.id !== pricingId) };
-    set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
-  },
-
-  updatePrintPricing: (catalogueId, pricingId, updates) => {
+  updateWholesalePrintSettings: (catalogueId, locations, templates) => {
     const cat = get().catalogues.find(c => c.id === catalogueId);
     const updatedCat = { 
       ...cat, 
-      printPricing: cat.printPricing.map(p => (p._id === pricingId || p.id === pricingId) ? { ...p, ...updates } : p) 
+      wholesaleLocations: locations,
+      wholesaleTemplates: templates
     };
     set(state => ({ catalogues: state.catalogues.map(c => c.id === catalogueId ? updatedCat : c) }));
   },

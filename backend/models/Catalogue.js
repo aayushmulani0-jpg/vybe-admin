@@ -6,10 +6,18 @@ const catalogueItemSchema = new mongoose.Schema({
   moq: { type: Number, required: true }
 });
 
-const printPricingSchema = new mongoose.Schema({
-  sizeName: { type: String, required: true },
-  dimensionsCm: { type: String, required: true },
-  price: { type: Number, required: true }
+const wholesaleLocationSchema = new mongoose.Schema({
+  locationId: { type: mongoose.Schema.Types.ObjectId, ref: 'PrintLocation' },
+  name: { type: String }, // Cached name for easy display
+  wholesaleCost: { type: Number, required: true },
+  isActive: { type: Boolean, default: true }
+});
+
+const wholesaleTemplateSchema = new mongoose.Schema({
+  templateId: { type: mongoose.Schema.Types.ObjectId, ref: 'Template' },
+  name: { type: String }, // Cached name
+  wholesalePrice: { type: Number, required: true },
+  isActive: { type: Boolean, default: true }
 });
 
 const catalogueSchema = new mongoose.Schema({
@@ -17,7 +25,8 @@ const catalogueSchema = new mongoose.Schema({
   dateCreated: { type: String },
   isLive: { type: Boolean, default: false },
   items: [catalogueItemSchema],
-  printPricing: [printPricingSchema],
+  wholesaleLocations: [wholesaleLocationSchema],
+  wholesaleTemplates: [wholesaleTemplateSchema],
 });
 
 module.exports = mongoose.model('Catalogue', catalogueSchema);

@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/layout/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Inventory from './pages/Inventory';
@@ -9,11 +10,16 @@ import CustomPrint from './pages/CustomPrint';
 import CatalogueEditor from './pages/CatalogueEditor';
 import Pricing from './pages/Pricing';
 import Customers from './pages/Customers';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      
+      <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
         <Route path="inventory" element={<Inventory />} />
