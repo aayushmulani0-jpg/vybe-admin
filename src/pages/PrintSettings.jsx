@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { usePrintSettingsStore } from '../store/usePrintSettingsStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
 import { MapPin, Power, Save, Layers, Edit2, Trash2, Plus, X, Check, Star } from 'lucide-react';
@@ -7,8 +8,9 @@ import { API_URL } from '../config';
 import { useUIStore } from '../store/useUIStore';
 
 export default function PrintSettings() {
-  const { printLocations, fetchPrintLocations, updateLocation, loading } = usePrintSettingsStore();
-  const [activeTab, setActiveTab] = useState('areas'); // 'areas' or 'templates'
+  const { printLocations, fetchPrintLocations, updateLocation, loading: printLoading } = usePrintSettingsStore();
+  const { settings, fetchSettings, updateSettings } = useSettingsStore();
+  const [activeTab, setActiveTab] = useState('areas'); // 'areas' or 'templates' or 'colors'
   const { alert, confirm } = useUIStore();
 
   // --- Print Areas State ---
@@ -28,7 +30,8 @@ export default function PrintSettings() {
   useEffect(() => {
     fetchPrintLocations();
     fetchTemplates();
-  }, [fetchPrintLocations]);
+    fetchSettings();
+  }, [fetchPrintLocations, fetchSettings]);
 
   useEffect(() => {
     if (printLocations) {
@@ -134,6 +137,28 @@ export default function PrintSettings() {
     });
   };
 
+  // --- Colors Logic ---
+  const [newColor, setNewColor] = useState({ name: '', hex: '#ffffff' });
+  
+  const handleAddColor = async () => {
+    if (!newColor.name || !newColor.hex) return;
+    const updatedColors = [...(settings?.customPrintColors || []), { ...newColor, isActive: true }];
+    const success = await updateSettings({ customPrintColors: updatedColors });
+    if (success) {
+      setNewColor({ name: '', hex: '#ffffff' });
+      alert('Color added successfully.', 'success', 'Added');
+    } else {
+      alert('Failed to add color.', 'error', 'Error');
+    }
+  };
+
+  const handleRemoveColor = async (index) => {
+    const updatedColors = [...(settings?.customPrintColors || [])];
+    updatedColors.splice(index, 1);
+    const success = await updateSettings({ customPrintColors: updatedColors });
+    if (success) alert('Color removed.', 'success', 'Removed');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -154,13 +179,19 @@ export default function PrintSettings() {
           >
             Templates
           </button>
+          <button 
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'colors' ? 'bg-vybe-glass border border-vybe-glassBorder text-white' : 'text-gray-400 hover:text-white'}`}
+            onClick={() => setActiveTab('colors')}
+          >
+            Colors
+          </button>
         </div>
       </div>
 
       {activeTab === 'areas' && (
         <div className="space-y-6">
           <div className="flex justify-end">
-            <Button onClick={handleSaveAreas} disabled={isSavingAreas || loading}>
+            <Button onClick={handleSaveAreas} disabled={isSavingAreas || printLoading}>
               <Save className="w-4 h-4 mr-2" />
               {isSavingAreas ? 'Saving...' : 'Save Changes'}
             </Button>
@@ -177,7 +208,7 @@ export default function PrintSettings() {
                   </tr>
                 </thead>
                 <tbody>
-                  {loading ? (
+                  {printLoading ? (
                     <tr>
                       <td colSpan="4" className="px-6 py-8 text-center text-gray-500">Loading locations...</td>
                     </tr>
@@ -381,6 +412,66 @@ export default function PrintSettings() {
               </div>
             </GlassCard>
           )}
+        </div>
+      )}
+
+      {activeTab === 'colors' && (
+        <div className="space-y-6">
+          <GlassCard className="p-6">
+            <h2 className="text-xl font-bold text-white mb-6">Available T-Shirt Colors</h2>
+            
+            <div className="flex gap-4 items-end mb-8 border-b border-vybe-glassBorder pb-8">
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Color Name</label>
+                <input 
+                  type="text" 
+                  value={newColor.name} 
+                  onChange={e => setNewColor({...newColor, name: e.target.value})}
+                  className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-md p-3 text-white focus:border-vybe-neon outline-none"
+                  placeholder="e.g. Vintage Black"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Hex Value</label>
+                <div className="flex items-center gap-2">
+                  <input 
+                    type="color" 
+                    value={newColor.hex} 
+                    onChange={e => setNewColor({...newColor, hex: e.target.value})}
+                    className="w-12 h-12 rounded cursor-pointer bg-transparent border-0 p-0"
+                  />
+                  <input 
+                    type="text" 
+                    value={newColor.hex} 
+                    onChange={e => setNewColor({...newColor, hex: e.target.value})}
+                    className="w-24 bg-vybe-dark border border-vybe-glassBorder rounded-md p-3 text-white focus:border-vybe-neon outline-none uppercase"
+                  />
+                </div>
+              </div>
+              <Button variant="primary" onClick={handleAddColor}><Plus className="w-4 h-4 mr-2" /> Add Color</Button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {(settings?.customPrintColors || []).map((color, idx) => (
+                <div key={idx} className="relative group bg-vybe-dark border border-vybe-glassBorder rounded-lg p-3 flex flex-col items-center">
+                  <button 
+                    onClick={() => handleRemoveColor(idx)}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                  <div className="w-12 h-12 rounded-full border border-white/20 mb-3 shadow-inner" style={{ backgroundColor: color.hex }}></div>
+                  <span className="text-white text-sm font-medium text-center truncate w-full">{color.name}</span>
+                  <span className="text-gray-500 text-xs uppercase font-mono">{color.hex}</span>
+                </div>
+              ))}
+              {(!settings?.customPrintColors || settings.customPrintColors.length === 0) && (
+                <div className="col-span-full text-center text-gray-500 py-8">
+                  No colors published yet. Add one above.
+                </div>
+              )}
+            </div>
+          </GlassCard>
         </div>
       )}
     </div>

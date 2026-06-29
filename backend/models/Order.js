@@ -9,13 +9,15 @@ const orderItemSchema = new mongoose.Schema({
   sizeName: { type: String },
   selectedSize: { type: String },
   selectedColor: { type: String },
+  selectedColorHex: { type: String },
   selectedPrints: [{
     name: { type: String },
     cost: { type: Number }
   }],
   customPrintPrice: { type: Number, default: 0 },
   itemTotal: { type: Number },
-  uploadedImages: { type: Object }
+  uploadedImages: { type: Object },
+  printingInstructions: { type: String }
 });
 
 const orderSchema = new mongoose.Schema({

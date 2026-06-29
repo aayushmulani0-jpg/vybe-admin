@@ -181,8 +181,8 @@ export default function Pricing() {
                           <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <input
                             type="number"
-                            value={config.value}
-                            onChange={(e) => handleInputChange(config._id, 'value', Number(e.target.value))}
+                            value={config.value === 0 ? '' : config.value}
+                            onChange={(e) => handleInputChange(config._id, 'value', e.target.value === '' ? 0 : Number(e.target.value))}
                             className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-9 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
                           />
                           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">{config.type === 'percentage' ? '%' : 'INR'}</span>
@@ -216,10 +216,10 @@ export default function Pricing() {
                         <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Min. Order Amount (INR)</label>
                         <input
                           type="number"
-                          value={config.minSubtotal || 0}
-                          onChange={(e) => handleInputChange(config._id, 'minSubtotal', Number(e.target.value))}
+                          value={config.minSubtotal === 0 ? '' : (config.minSubtotal || '')}
+                          onChange={(e) => handleInputChange(config._id, 'minSubtotal', e.target.value === '' ? 0 : Number(e.target.value))}
                           className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
-                          placeholder="e.g. 50000 (0 for no limit)"
+                          placeholder="e.g. 50000 (leave empty for no limit)"
                         />
                       </div>
                       <div>

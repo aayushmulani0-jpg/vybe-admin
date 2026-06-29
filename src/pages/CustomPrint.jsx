@@ -155,17 +155,6 @@ export default function CustomPrint() {
                     </div>
                   )}
                   <div className="flex justify-between border-b border-gray-800 pb-2">
-                    <span className="text-gray-400">Garment Type</span>
-                    <span className="font-medium text-white">{selectedOrder.baseProduct}</span>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-800 pb-2">
-                    <span className="text-gray-400">Garment Color Hex</span>
-                    <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 rounded-full border border-gray-600" style={{ backgroundColor: selectedOrder.color }}></div>
-                      <span className="font-mono text-vybe-neon">{selectedOrder.color}</span>
-                    </div>
-                  </div>
-                  <div className="flex justify-between border-b border-gray-800 pb-2">
                     <span className="text-gray-400">Print Areas</span>
                     <span className="font-medium text-white text-right max-w-[200px] break-words">
                       {selectedOrder.itemsList?.[0]?.selectedPrints?.map(p => p.name).join(', ') || 'N/A'}
@@ -189,6 +178,17 @@ export default function CustomPrint() {
                             <div className="text-gray-400 flex justify-between">
                               <span>Qty: {item.qty} | Size: {item.selectedSize || 'N/A'}</span>
                               <span>Base: ₹{item.price} + Print: ₹{item.selectedPrints?.reduce((sum, p) => sum + (Number(p.cost) || 0), 0) || 0}</span>
+                            </div>
+                            <div className="text-gray-400 flex justify-between items-center mt-1 pt-2 border-t border-vybe-glassBorder">
+                              <span>Color: {item.selectedColor || 'Black'}</span>
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 rounded-full border border-gray-600" style={{ backgroundColor: item.selectedColorHex || '#000000' }}></div>
+                                <span className="font-mono text-vybe-neon text-[10px] uppercase">{item.selectedColorHex || '#000000'}</span>
+                              </div>
+                            </div>
+                            <div className="mt-1 pt-2 border-t border-vybe-glassBorder">
+                              <strong className="block text-[10px] uppercase text-gray-500 mb-1">Printing Instructions:</strong>
+                              <p className="text-gray-300 italic whitespace-pre-wrap">{item.printingInstructions || 'None provided'}</p>
                             </div>
                             {item.uploadedImages && Object.keys(item.uploadedImages).length > 0 && (
                               <div className="mt-1 pt-2 border-t border-vybe-glassBorder">

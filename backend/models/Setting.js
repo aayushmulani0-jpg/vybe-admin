@@ -18,8 +18,14 @@ const settingSchema = new mongoose.Schema({
   },
   general: {
     storeName: { type: String, default: 'Vybe' },
-    supportEmail: { type: String, default: 'support@vybe.com' }
-  }
+    supportEmail: { type: String, default: 'support@vybe.com' },
+    announcement: { type: String, default: '' }
+  },
+  customPrintColors: [{
+    name: { type: String, required: true },
+    hex: { type: String, required: true },
+    isActive: { type: Boolean, default: true }
+  }]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Setting', settingSchema);

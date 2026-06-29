@@ -8,12 +8,12 @@ import { Save, Settings2, LayoutTemplate, Type, Palette } from 'lucide-react';
 
 export default function Settings() {
   const { settings, fetchSettings, updateSettings, isLoading } = useSettingsStore();
-  const { alert } = useUIStore();
+  const { alert, confirm } = useUIStore();
   const [activeTab, setActiveTab] = useState('theme');
   const [formData, setFormData] = useState({
     themeColors: { primary: '#000000', secondary: '#FFFFFF', accent: '#A3FF12' },
     borderRadius: { button: '0px', popup: '0.75rem' },
-    general: { storeName: 'Vybe', supportEmail: 'support@vybe.com' }
+    general: { storeName: 'Vybe', supportEmail: 'support@vybe.com', announcement: '' }
   });
 
   useEffect(() => {
@@ -46,21 +46,26 @@ export default function Settings() {
   };
 
   const handleRestoreDefaults = async () => {
-    if (!window.confirm('Are you sure you want to restore all settings to their default values? This will immediately apply to the storefront.')) return;
-    
-    const defaults = {
-      themeColors: { primary: '#000000', secondary: '#FFFFFF', accent: '#A3FF12' },
-      borderRadius: { button: '0px', popup: '0.75rem' },
-      general: { storeName: 'Vybe', supportEmail: 'support@vybe.com' }
-    };
-    
-    const success = await updateSettings(defaults);
-    if (success) {
-      setFormData(defaults);
-      alert('Settings restored to defaults.', 'success', 'Restored');
-    } else {
-      alert('Failed to restore settings.', 'error', 'Error');
-    }
+    confirm({
+      title: 'Restore Defaults',
+      message: 'Are you sure you want to restore all settings to their default values? This will immediately apply to the storefront.',
+      confirmText: 'Restore',
+      onConfirm: async () => {
+        const defaults = {
+          themeColors: { primary: '#000000', secondary: '#FFFFFF', accent: '#A3FF12' },
+          borderRadius: { button: '0px', popup: '0.75rem' },
+          general: { storeName: 'Vybe', supportEmail: 'support@vybe.com', announcement: '' }
+        };
+        
+        const success = await updateSettings(defaults);
+        if (success) {
+          setFormData(defaults);
+          alert('Settings restored to defaults.', 'success', 'Restored');
+        } else {
+          alert('Failed to restore settings.', 'error', 'Error');
+        }
+      }
+    });
   };
 
   if (isLoading && !settings) {
@@ -223,6 +228,17 @@ export default function Settings() {
                 value={formData.general?.supportEmail || ''}
                 onChange={(e) => handleNestedChange('general', 'supportEmail', e.target.value)}
               />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-400 mb-2">Announcement / Notice Bar</label>
+                <textarea
+                  value={formData.general?.announcement || ''}
+                  onChange={(e) => handleNestedChange('general', 'announcement', e.target.value)}
+                  placeholder="Enter a message to display at the top of the storefront (leave blank to hide)"
+                  className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-3 text-white focus:outline-none focus:border-vybe-neon transition-colors resize-none"
+                  rows={2}
+                />
+                <p className="text-xs text-gray-500 mt-2">This will appear on all pages of the storefront.</p>
+              </div>
             </div>
           </div>
         )}
