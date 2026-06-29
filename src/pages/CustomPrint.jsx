@@ -3,18 +3,40 @@ import { useCustomPrintStore } from '../store/useCustomPrintStore';
 import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
 import MockupViewer from '../components/custom-print/MockupViewer';
-import { Palette, Eye, Download, X, Settings, Search } from 'lucide-react';
+import { Palette, Eye, Download, X, Settings, Search, Save } from 'lucide-react';
 import PrintSettings from './PrintSettings';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 export default function CustomPrint() {
   const { customOrders, updateOrderStatus, fetchCustomOrders } = useCustomPrintStore();
+  const { settings, fetchSettings, updateSettings } = useSettingsStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSavingNotice, setIsSavingNotice] = useState(false);
+  const [noticeText, setNoticeText] = useState('');
 
   useEffect(() => {
     fetchCustomOrders();
-  }, [fetchCustomOrders]);
+    fetchSettings();
+  }, [fetchCustomOrders, fetchSettings]);
+
+  useEffect(() => {
+    if (settings && settings.general) {
+      setNoticeText(settings.general.customPrintNotice || '');
+    }
+  }, [settings]);
+
+  const handleSaveNotice = async () => {
+    setIsSavingNotice(true);
+    await updateSettings({
+      general: {
+        ...settings.general,
+        customPrintNotice: noticeText
+      }
+    });
+    setIsSavingNotice(false);
+  };
 
   const CUSTOM_STATUSES = ['New Order', 'Printing', 'Completed'];
 
@@ -36,7 +58,7 @@ export default function CustomPrint() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">Custom Print Orders</h1>
           <p className="text-sm text-gray-400">View customer designs, update printing statuses, and download production files.</p>
@@ -58,6 +80,25 @@ export default function CustomPrint() {
           </Button>
         </div>
       </div>
+
+      {/* Notice Editor */}
+      <GlassCard className="p-4">
+        <h3 className="text-sm font-bold text-white mb-2 uppercase tracking-wider">Storefront Notice</h3>
+        <p className="text-xs text-gray-400 mb-3">Add a note to display at the top of the Custom Print page for your users (e.g. "We are currently out of large size shirts" or "Please expect 3-day delays for custom prints").</p>
+        <div className="flex items-start gap-4">
+          <textarea
+            value={noticeText}
+            onChange={(e) => setNoticeText(e.target.value)}
+            placeholder="Enter notice text here... (leave blank to hide)"
+            className="flex-1 bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon transition-colors resize-none"
+            rows={2}
+          />
+          <Button onClick={handleSaveNotice} disabled={isSavingNotice}>
+            <Save className="w-4 h-4 mr-2" />
+            {isSavingNotice ? 'Saving...' : 'Save Notice'}
+          </Button>
+        </div>
+      </GlassCard>
 
       <GlassCard className="overflow-hidden">
         <div className="overflow-x-auto">

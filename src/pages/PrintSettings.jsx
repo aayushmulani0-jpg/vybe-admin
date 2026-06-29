@@ -16,6 +16,7 @@ export default function PrintSettings() {
   // --- Print Areas State ---
   const [localLocations, setLocalLocations] = useState([]);
   const [isSavingAreas, setIsSavingAreas] = useState(false);
+  const [newArea, setNewArea] = useState({ name: '', cost: 0, isActive: true });
 
   // --- Templates State ---
   const [templates, setTemplates] = useState([]);
@@ -51,7 +52,6 @@ export default function PrintSettings() {
     }
   };
 
-  // --- Print Areas Logic ---
   const handleToggleArea = (id) => {
     setLocalLocations(prev => prev.map(loc => 
       loc._id === id ? { ...loc, isActive: !loc.isActive } : loc
@@ -64,11 +64,40 @@ export default function PrintSettings() {
     ));
   };
 
+  const handleNameChangeArea = (id, newName) => {
+    setLocalLocations(prev => prev.map(loc => 
+      loc._id === id ? { ...loc, name: newName } : loc
+    ));
+  };
+
+  const handleAddArea = async () => {
+    if (!newArea.name.trim()) return alert('Please enter a zone name.', 'error', 'Error');
+    const success = await usePrintSettingsStore.getState().addLocation(newArea);
+    if (success) {
+      setNewArea({ name: '', cost: 0, isActive: true });
+      alert('Print area added successfully.', 'success', 'Added');
+      fetchPrintLocations();
+    } else {
+      alert('Failed to add print area.', 'error', 'Error');
+    }
+  };
+
+  const handleDeleteArea = (id) => {
+    confirm({
+      title: 'Delete Print Area',
+      message: 'Are you sure you want to delete this print area? This might break templates using it.',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        await usePrintSettingsStore.getState().deleteLocation(id);
+        fetchPrintLocations();
+      }
+    });
+  };
+
   const handleSaveAreas = async () => {
     setIsSavingAreas(true);
     try {
-      const promises = localLocations.map(loc => updateLocation(loc._id, { cost: loc.cost, isActive: loc.isActive }));
-      await Promise.all(promises);
+      const promises = localLocations.map(loc => usePrintSettingsStore.getState().updateLocation(loc._id, { name: loc.name, cost: loc.cost, isActive: loc.isActive }));
       await Promise.all(promises);
       await fetchPrintLocations();
       alert('Print settings saved successfully!', 'success', 'Success');
@@ -190,7 +219,34 @@ export default function PrintSettings() {
 
       {activeTab === 'areas' && (
         <div className="space-y-6">
-          <div className="flex justify-end">
+          <GlassCard className="p-6 mb-6">
+            <h2 className="text-xl font-bold text-white mb-6">Add New Print Area</h2>
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Zone Name</label>
+                <input 
+                  type="text" 
+                  value={newArea.name} 
+                  onChange={e => setNewArea({...newArea, name: e.target.value})}
+                  className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-md p-3 text-white focus:border-vybe-neon outline-none"
+                  placeholder="e.g. Center Chest"
+                />
+              </div>
+              <div className="w-32">
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Price (₹)</label>
+                <input 
+                  type="number" 
+                  value={newArea.cost} 
+                  onChange={e => setNewArea({...newArea, cost: Number(e.target.value)})}
+                  className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-md p-3 text-white focus:border-vybe-neon outline-none"
+                />
+              </div>
+              <Button variant="primary" onClick={handleAddArea}><Plus className="w-4 h-4 mr-2" /> Add Area</Button>
+            </div>
+          </GlassCard>
+
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-white">Manage Existing Areas</h2>
             <Button onClick={handleSaveAreas} disabled={isSavingAreas || printLoading}>
               <Save className="w-4 h-4 mr-2" />
               {isSavingAreas ? 'Saving...' : 'Save Changes'}
@@ -225,7 +281,14 @@ export default function PrintSettings() {
                   ) : (
                     localLocations.map((loc) => (
                       <tr key={loc._id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
-                        <td className="px-6 py-4 font-medium text-white">{loc.name}</td>
+                        <td className="px-6 py-4">
+                          <input 
+                            type="text"
+                            value={loc.name}
+                            onChange={(e) => handleNameChangeArea(loc._id, e.target.value)}
+                            className="w-full bg-transparent border-b border-gray-600 focus:border-vybe-neon focus:outline-none text-white pb-1 font-medium"
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <span className="text-gray-400">₹</span>
@@ -243,13 +306,22 @@ export default function PrintSettings() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <button 
-                            onClick={() => handleToggleArea(loc._id)}
-                            className={`p-2 rounded-lg transition-colors ${loc.isActive ? 'text-red-400 hover:bg-red-500/10' : 'text-green-400 hover:bg-green-500/10'}`}
-                            title={loc.isActive ? 'Disable Location' : 'Enable Location'}
-                          >
-                            <Power className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-2">
+                            <button 
+                              onClick={() => handleToggleArea(loc._id)}
+                              className={`p-2 rounded-lg transition-colors ${loc.isActive ? 'text-orange-400 hover:bg-orange-500/10' : 'text-green-400 hover:bg-green-500/10'}`}
+                              title={loc.isActive ? 'Disable Location' : 'Enable Location'}
+                            >
+                              <Power className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteArea(loc._id)}
+                              className="p-2 rounded-lg transition-colors text-red-400 hover:bg-red-500/10"
+                              title="Delete Location"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))

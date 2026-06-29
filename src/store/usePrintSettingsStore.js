@@ -34,4 +34,40 @@ export const usePrintSettingsStore = create((set, get) => ({
       console.error('Failed to update print location:', error);
     }
   },
+
+  addLocation: async (locationData) => {
+    try {
+      const res = await fetch(`${API_URL}/print-locations`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(locationData),
+      });
+      if (res.ok) {
+        const added = await res.json();
+        set(state => ({
+          printLocations: [...state.printLocations, added]
+        }));
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to add print location:', error);
+      return false;
+    }
+  },
+
+  deleteLocation: async (id) => {
+    try {
+      const res = await fetch(`${API_URL}/print-locations/${id}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        set(state => ({
+          printLocations: state.printLocations.filter(loc => loc._id !== id)
+        }));
+      }
+    } catch (error) {
+      console.error('Failed to delete print location:', error);
+    }
+  }
 }));

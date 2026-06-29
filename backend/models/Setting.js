@@ -19,7 +19,8 @@ const settingSchema = new mongoose.Schema({
   general: {
     storeName: { type: String, default: 'Vybe' },
     supportEmail: { type: String, default: 'support@vybe.com' },
-    announcement: { type: String, default: '' }
+    announcement: { type: String, default: '' },
+    customPrintNotice: { type: String, default: '' }
   },
   customPrintColors: [{
     name: { type: String, required: true },
