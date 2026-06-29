@@ -19,8 +19,7 @@ import { useAdminAuthStore } from '../../store/useAdminAuthStore';
 
 const NAV_ITEMS = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
-  { name: 'Products', path: '/products', icon: Package },
-  { name: 'Inventory', path: '/inventory', icon: Truck },
+  { name: 'Products & Inventory', path: '/inventory', icon: Package },
   { name: 'Retail Orders', path: '/retail-orders', icon: ShoppingCart },
   { name: 'Wholesale Orders', path: '/wholesale-orders', icon: Package },
   { name: 'Custom Print', path: '/custom-print', icon: Palette },
@@ -28,7 +27,7 @@ const NAV_ITEMS = [
   { name: 'Collections & Drops', path: '/collections', icon: Layers },
   { name: 'Marketing Banners', path: '/banners', icon: ImageIcon },
   { name: 'Customers', path: '/customers', icon: Users },
-  { name: 'Global Pricing', path: '/pricing', icon: DollarSign },
+  { name: 'Discounts & Charges', path: '/pricing', icon: DollarSign },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
 

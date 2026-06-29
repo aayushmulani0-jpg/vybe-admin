@@ -76,10 +76,12 @@ export default function Pricing() {
     setPricingConfigs([
       ...pricingConfigs,
       {
-        name: 'New Fee',
+        name: 'New Rule',
         value: 0,
         currency: 'INR',
         type: 'fixed',
+        action: 'add',
+        minSubtotal: 0,
         description: ''
       }
     ]);
@@ -125,8 +127,8 @@ export default function Pricing() {
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-end mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Global Pricing</h1>
-            <p className="text-gray-400">Manage base fees, delivery charges, and other dynamic pricing configurations.</p>
+            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Discounts & Charges</h1>
+            <p className="text-gray-400">Manage base fees, delivery charges, and dynamic discount templates.</p>
           </div>
           <div className="flex gap-4">
             <button 
@@ -134,7 +136,7 @@ export default function Pricing() {
               className="flex items-center gap-2 px-4 py-2 bg-vybe-dark border border-vybe-glassBorder text-white rounded-lg hover:bg-vybe-glass transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Add Fee
+              Add Rule
             </button>
             <button 
               onClick={handleSave}
@@ -162,7 +164,7 @@ export default function Pricing() {
                   className="p-6 flex flex-col md:flex-row gap-6 items-start md:items-center hover:bg-white/[0.02] transition-colors"
                 >
                   <div className="flex-1 space-y-4 w-full">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                       <div>
                         <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Fee Name</label>
                         <input
@@ -183,18 +185,53 @@ export default function Pricing() {
                             onChange={(e) => handleInputChange(config._id, 'value', Number(e.target.value))}
                             className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-9 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
                           />
+                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">{config.type === 'percentage' ? '%' : 'INR'}</span>
                         </div>
                       </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Format</label>
+                        <select
+                          value={config.type || 'fixed'}
+                          onChange={(e) => handleInputChange(config._id, 'type', e.target.value)}
+                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all appearance-none"
+                        >
+                          <option value="fixed">Fixed Amount</option>
+                          <option value="percentage">Percentage (%)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Type</label>
+                        <select
+                          value={config.action || 'add'}
+                          onChange={(e) => handleInputChange(config._id, 'action', e.target.value)}
+                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all appearance-none"
+                        >
+                          <option value="add">Additional Charge (+)</option>
+                          <option value="subtract">Discount (-)</option>
+                        </select>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Description (Optional)</label>
-                      <input
-                        type="text"
-                        value={config.description || ''}
-                        onChange={(e) => handleInputChange(config._id, 'description', e.target.value)}
-                        className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
-                        placeholder="Explain when this fee applies..."
-                      />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Min. Order Amount (INR)</label>
+                        <input
+                          type="number"
+                          value={config.minSubtotal || 0}
+                          onChange={(e) => handleInputChange(config._id, 'minSubtotal', Number(e.target.value))}
+                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
+                          placeholder="e.g. 50000 (0 for no limit)"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Description (Optional)</label>
+                        <input
+                          type="text"
+                          value={config.description || ''}
+                          onChange={(e) => handleInputChange(config._id, 'description', e.target.value)}
+                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
+                          placeholder="Explain when this rule applies..."
+                        />
+                      </div>
                     </div>
                   </div>
                   
