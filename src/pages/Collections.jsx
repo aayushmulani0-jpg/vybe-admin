@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, Search } from 'lucide-react';
 import { API_URL } from '../config';
+import { useUIStore } from '../store/useUIStore';
 
 export default function Collections() {
   const [collections, setCollections] = useState([]);
@@ -8,6 +9,7 @@ export default function Collections() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const initialForm = {
     name: '',
@@ -26,6 +28,7 @@ export default function Collections() {
   };
   
   const [formData, setFormData] = useState(initialForm);
+  const { alert, confirm } = useUIStore();
 
   useEffect(() => {
     fetchCollections();
@@ -94,25 +97,31 @@ export default function Collections() {
         setIsModalOpen(false);
         fetchCollections();
       } else {
-        alert(data.message || 'Error saving collection');
+        alert(data.message || 'Error saving collection', 'error', 'Error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error');
+      alert('Network error', 'error', 'Error');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this collection?')) return;
-    try {
-      const res = await fetch(`${API_URL}/collections/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        fetchCollections();
+  const handleDelete = (id) => {
+    confirm({
+      title: 'Delete Collection',
+      message: 'Are you sure you want to delete this collection?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_URL}/collections/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            fetchCollections();
+          }
+        } catch (err) {
+          console.error(err);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
   const handleChange = (e) => {
@@ -150,15 +159,19 @@ export default function Collections() {
       if (data.url) {
         setFormData(prev => ({ ...prev, [field]: data.url }));
       } else {
-        alert('Upload failed: ' + (data.message || 'Unknown error'));
+        alert('Upload failed: ' + (data.message || 'Unknown error'), 'error', 'Upload Error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error during upload');
+      alert('Network error during upload', 'error', 'Error');
     }
   };
 
   if (loading) return <div className="text-white p-6">Loading collections...</div>;
+
+  const filteredCollections = collections.filter((col) => {
+    return col.name?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <div className="space-y-6">
@@ -167,12 +180,24 @@ export default function Collections() {
           <h1 className="text-2xl font-bold text-white mb-1">Collections & Drops</h1>
           <p className="text-sm text-gray-400">Manage your product collections, drops, and campaigns.</p>
         </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-vybe-neon text-black rounded-lg text-sm font-semibold hover:shadow-[0_0_20px_rgba(163,255,18,0.5)] transition-all"
-        >
-          <Plus className="w-4 h-4" /> New Collection
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              type="text"
+              placeholder="Search collections..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <button 
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 px-4 py-2 bg-vybe-neon text-black rounded-lg text-sm font-semibold hover:shadow-[0_0_20px_rgba(163,255,18,0.5)] transition-all"
+          >
+            <Plus className="w-4 h-4" /> New Collection
+          </button>
+        </div>
       </div>
 
       <div className="glass-panel overflow-hidden">
@@ -187,12 +212,12 @@ export default function Collections() {
             </tr>
           </thead>
           <tbody>
-            {collections.length === 0 ? (
+            {filteredCollections.length === 0 ? (
               <tr>
                 <td colSpan="5" className="p-8 text-center text-gray-500">No collections found.</td>
               </tr>
             ) : (
-              collections.map(col => (
+              filteredCollections.map(col => (
                 <tr key={col._id} className="border-b border-vybe-glassBorder hover:bg-vybe-glass/20 transition-colors">
                   <td className="p-4 text-white font-medium">{col.name}</td>
                   <td className="p-4 text-sm text-gray-300">{col.type}</td>

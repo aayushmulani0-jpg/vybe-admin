@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Image as ImageIcon, Search } from 'lucide-react';
 import { API_URL } from '../config';
+import { useUIStore } from '../store/useUIStore';
 
 export default function Banners() {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const initialForm = {
     title: '',
@@ -27,6 +29,8 @@ export default function Banners() {
   };
   
   const [formData, setFormData] = useState(initialForm);
+
+  const { alert, confirm } = useUIStore();
 
   useEffect(() => {
     fetchBanners();
@@ -81,25 +85,31 @@ export default function Banners() {
         setIsModalOpen(false);
         fetchBanners();
       } else {
-        alert(data.message || 'Error saving banner');
+        alert(data.message || 'Error saving banner', 'error', 'Error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error');
+      alert('Network error', 'error', 'Error');
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this banner?')) return;
-    try {
-      const res = await fetch(`${API_URL}/banners/${id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        fetchBanners();
+  const handleDelete = (id) => {
+    confirm({
+      title: 'Delete Banner',
+      message: 'Are you sure you want to delete this banner?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_URL}/banners/${id}`, { method: 'DELETE' });
+          const data = await res.json();
+          if (data.success) {
+            fetchBanners();
+          }
+        } catch (err) {
+          console.error(err);
+        }
       }
-    } catch (err) {
-      console.error(err);
-    }
+    });
   };
 
   const handleChange = (e) => {
@@ -137,15 +147,19 @@ export default function Banners() {
       if (data.url) {
         setFormData(prev => ({ ...prev, [field]: data.url }));
       } else {
-        alert('Upload failed: ' + (data.message || 'Unknown error'));
+        alert('Upload failed: ' + (data.message || 'Unknown error'), 'error', 'Upload Error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error during upload');
+      alert('Network error during upload', 'error', 'Error');
     }
   };
 
   if (loading) return <div className="text-white p-6">Loading banners...</div>;
+
+  const filteredBanners = banners.filter((banner) => {
+    return banner.title?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <div className="space-y-6">
@@ -154,12 +168,24 @@ export default function Banners() {
           <h1 className="text-2xl font-bold text-white mb-1">Marketing Banners</h1>
           <p className="text-sm text-gray-400">Manage homepage hero banners and promotional carousels.</p>
         </div>
-        <button 
-          onClick={() => handleOpenModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-vybe-neon text-black rounded-lg text-sm font-semibold hover:shadow-[0_0_20px_rgba(163,255,18,0.5)] transition-all"
-        >
-          <Plus className="w-4 h-4" /> New Banner
-        </button>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              type="text"
+              placeholder="Search banners..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <button 
+            onClick={() => handleOpenModal()}
+            className="flex items-center gap-2 px-4 py-2 bg-vybe-neon text-black rounded-lg text-sm font-semibold hover:shadow-[0_0_20px_rgba(163,255,18,0.5)] transition-all"
+          >
+            <Plus className="w-4 h-4" /> New Banner
+          </button>
+        </div>
       </div>
 
       <div className="glass-panel overflow-hidden">
@@ -174,12 +200,12 @@ export default function Banners() {
             </tr>
           </thead>
           <tbody>
-            {banners.length === 0 ? (
+            {filteredBanners.length === 0 ? (
               <tr>
                 <td colSpan="5" className="p-8 text-center text-gray-500">No banners found.</td>
               </tr>
             ) : (
-              banners.map(banner => (
+              filteredBanners.map(banner => (
                 <tr key={banner._id} className="border-b border-vybe-glassBorder hover:bg-vybe-glass/20 transition-colors">
                   <td className="p-4 text-white font-medium">{banner.title}</td>
                   <td className="p-4 text-sm text-gray-300">{banner.type}</td>

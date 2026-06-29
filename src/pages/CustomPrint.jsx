@@ -3,13 +3,14 @@ import { useCustomPrintStore } from '../store/useCustomPrintStore';
 import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
 import MockupViewer from '../components/custom-print/MockupViewer';
-import { Palette, Eye, Download, X, Settings } from 'lucide-react';
+import { Palette, Eye, Download, X, Settings, Search } from 'lucide-react';
 import PrintSettings from './PrintSettings';
 
 export default function CustomPrint() {
   const { customOrders, updateOrderStatus, fetchCustomOrders } = useCustomPrintStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchCustomOrders();
@@ -26,6 +27,13 @@ export default function CustomPrint() {
     }
   };
 
+  const filteredOrders = customOrders.filter((order) => {
+    const query = searchQuery.toLowerCase();
+    const matchesId = order.id?.toLowerCase().includes(query);
+    const matchesCustomer = order.customer?.toLowerCase().includes(query);
+    return matchesId || matchesCustomer;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -33,10 +41,22 @@ export default function CustomPrint() {
           <h1 className="text-2xl font-bold text-white mb-1">Custom Print Orders</h1>
           <p className="text-sm text-gray-400">View customer designs, update printing statuses, and download production files.</p>
         </div>
-        <Button onClick={() => setShowSettingsModal(true)}>
-          <Settings className="w-4 h-4 mr-2" />
-          Manage Print Areas
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              type="text"
+              placeholder="Search by ID or Customer..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <Button onClick={() => setShowSettingsModal(true)}>
+            <Settings className="w-4 h-4 mr-2" />
+            Manage Print Areas
+          </Button>
+        </div>
       </div>
 
       <GlassCard className="overflow-hidden">
@@ -53,7 +73,7 @@ export default function CustomPrint() {
               </tr>
             </thead>
             <tbody>
-              {customOrders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-white">{order.id.slice(-8).toUpperCase()}</td>
                   <td className="px-6 py-4">{order.date || new Date(order.createdAt).toLocaleDateString()}</td>
@@ -77,7 +97,7 @@ export default function CustomPrint() {
                   </td>
                 </tr>
               ))}
-              {customOrders.length === 0 && (
+              {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan="7" className="px-6 py-16 text-center">
                     <div className="w-16 h-16 bg-vybe-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-vybe-glassBorder">

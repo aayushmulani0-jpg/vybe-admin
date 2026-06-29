@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Plus, Trash2, DollarSign } from 'lucide-react';
+import { useUIStore } from '../store/useUIStore';
 const API_URL = 'http://localhost:5000/api';
 
 export default function Pricing() {
   const [pricingConfigs, setPricingConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { alert, confirm } = useUIStore();
 
   const token = localStorage.getItem('vybe-admin-token');
 
@@ -61,11 +63,11 @@ export default function Pricing() {
       });
       
       await Promise.all(updatePromises);
-      alert('Pricing configurations saved successfully!');
+      alert('Pricing configurations saved successfully!', 'success', 'Success');
       fetchPricing(); // Refresh to get proper IDs for new items
     } catch (error) {
       console.error('Error saving pricing:', error);
-      alert('Failed to save pricing configurations.');
+      alert('Failed to save pricing configurations.', 'error', 'Error');
     }
     setSaving(false);
   };
@@ -92,17 +94,22 @@ export default function Pricing() {
       return;
     }
     
-    if (window.confirm('Are you sure you want to delete this pricing configuration?')) {
-      try {
-        await fetch(`${API_URL}/pricing/${id}`, { 
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        fetchPricing();
-      } catch (error) {
-        console.error('Error deleting config:', error);
+    confirm({
+      title: 'Delete Pricing Config',
+      message: 'Are you sure you want to delete this pricing configuration?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await fetch(`${API_URL}/pricing/${id}`, { 
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          fetchPricing();
+        } catch (error) {
+          console.error('Error deleting config:', error);
+        }
       }
-    }
+    });
   };
 
   if (loading) {

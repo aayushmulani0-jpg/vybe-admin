@@ -4,7 +4,7 @@ import { useProductStore } from '../store/useProductStore';
 import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
-import { BookOpen, Trash2, Plus, CheckCircle, Globe, X, ArrowLeft, Settings2, Settings } from 'lucide-react';
+import { BookOpen, Trash2, Plus, CheckCircle, Globe, X, ArrowLeft, Settings2, Settings, Search } from 'lucide-react';
 import WholesalePrintSettingsModal from '../components/catalogue/WholesalePrintSettingsModal';
 
 export default function CatalogueEditor() {
@@ -18,6 +18,7 @@ export default function CatalogueEditor() {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newCatName, setNewCatName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Master-Detail state
   const [selectedCatId, setSelectedCatId] = useState(null);
@@ -193,6 +194,10 @@ export default function CatalogueEditor() {
     );
   }
 
+  const filteredCatalogues = catalogues.filter((cat) => {
+    return cat.name?.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
   // --- MASTER VIEW ---
   return (
     <div className="space-y-6">
@@ -201,10 +206,22 @@ export default function CatalogueEditor() {
           <h1 className="text-2xl font-bold text-white mb-1">Wholesale Catalogues</h1>
           <p className="text-sm text-gray-400">Manage your product catalogues. Only one catalogue can be live for buyers to order.</p>
         </div>
-        <Button onClick={() => setShowCreateModal(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Catalogue
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              type="text"
+              placeholder="Search catalogues..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Catalogue
+          </Button>
+        </div>
       </div>
 
       {catalogues.length === 0 && !showCreateModal && (
@@ -220,9 +237,9 @@ export default function CatalogueEditor() {
         </div>
       )}
 
-      {catalogues.length > 0 && (
+      {filteredCatalogues.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {catalogues.map((cat) => (
+          {filteredCatalogues.map((cat) => (
             <GlassCard key={cat.id} className={`p-6 border transition-all duration-300 relative overflow-hidden ${cat.isLive ? 'border-vybe-neon shadow-[0_0_20px_rgba(163,255,18,0.1)]' : 'border-vybe-glassBorder hover:border-gray-500'}`}>
 
               {cat.isLive && (

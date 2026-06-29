@@ -4,7 +4,8 @@ import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import ImageDropzone from '../components/common/ImageDropzone';
-import { Package, Trash2, Plus, Edit2, X } from 'lucide-react';
+import { Package, Trash2, Plus, Edit2, X, Search } from 'lucide-react';
+import { useUIStore } from '../store/useUIStore';
 
 export default function Inventory() {
   const { 
@@ -15,6 +16,7 @@ export default function Inventory() {
     toggleStock,
     fetchProducts
   } = useProductStore();
+  const { alert, confirm } = useUIStore();
 
   useEffect(() => {
     fetchProducts();
@@ -22,6 +24,7 @@ export default function Inventory() {
   
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const initialFormState = {
     name: '',
@@ -88,19 +91,19 @@ export default function Inventory() {
     
     // Strict validation
     if (!newProduct.name || !newProduct.price || !newProduct.comparePrice) {
-      alert("Please fill in all price and name fields.");
+      alert("Please fill in all price and name fields.", "error", "Missing Fields");
       return;
     }
     if (newProduct.sizes.length === 0) {
-      alert("Please select at least one size.");
+      alert("Please select at least one size.", "error", "Missing Sizes");
       return;
     }
     if (newProduct.colors.length === 0) {
-      alert("Please add at least one color.");
+      alert("Please add at least one color.", "error", "Missing Colors");
       return;
     }
     if (!newProduct.image) {
-      alert("Please upload a product image.");
+      alert("Please upload a product image.", "error", "Missing Image");
       return;
     }
 
@@ -129,17 +132,37 @@ export default function Inventory() {
           <h1 className="text-2xl font-bold text-white mb-1">Inventory Management</h1>
           <p className="text-sm text-gray-400">Manage your product stock, badges, prices, and catalog.</p>
         </div>
-        <Button onClick={() => {
-          setEditingId(null);
-          setNewProduct(initialFormState);
-          setShowAddForm(!showAddForm);
-        }}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Product
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="relative w-64">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
+            />
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+          <Button onClick={() => {
+            setEditingId(null);
+            setNewProduct(initialFormState);
+            setShowAddForm(!showAddForm);
+          }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
-      {showAddForm && (
+      {(() => {
+        const filteredProducts = products.filter(product => {
+          const query = searchQuery.toLowerCase();
+          return product.name?.toLowerCase().includes(query) || product.id?.toLowerCase().includes(query);
+        });
+
+        return (
+          <>
+            {showAddForm && (
         <GlassCard className="p-6 relative">
           <button onClick={() => setShowAddForm(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white bg-vybe-glass rounded-full transition-colors z-10">
             <X className="w-5 h-5" />
@@ -341,7 +364,7 @@ export default function Inventory() {
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <tr key={product.id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-white flex items-center gap-3 min-w-[250px]">
                     <div className="w-12 h-12 rounded overflow-hidden bg-vybe-dark shrink-0 border border-vybe-glassBorder">
@@ -446,13 +469,20 @@ export default function Inventory() {
                     <button onClick={() => handleEditClick(product)} className="p-2 text-gray-400 hover:text-vybe-neon transition-colors rounded-lg hover:bg-vybe-neon/10" title="Edit Product">
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button onClick={() => deleteProduct(product.id)} className="p-2 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10" title="Delete Product">
+                    <button onClick={() => {
+                      confirm({
+                        title: 'Delete Product',
+                        message: `Are you sure you want to delete ${product.name}?`,
+                        confirmText: 'Delete',
+                        onConfirm: () => deleteProduct(product.id)
+                      });
+                    }} className="p-2 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10" title="Delete Product">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>
               ))}
-              {products.length === 0 && (
+              {filteredProducts.length === 0 && (
                 <tr>
                   <td colSpan="6" className="px-6 py-16 text-center">
                     <div className="w-16 h-16 bg-vybe-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-vybe-glassBorder">
@@ -470,6 +500,9 @@ export default function Inventory() {
           </table>
         </div>
       </GlassCard>
+          </>
+        );
+      })()}
     </div>
   );
 }

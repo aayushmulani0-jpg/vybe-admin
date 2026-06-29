@@ -1,8 +1,16 @@
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import ConfirmModal from '../common/ConfirmModal';
+import AlertModal from '../common/AlertModal';
+import { useUIStore } from '../../store/useUIStore';
 
 export default function Layout() {
+  const { 
+    confirmModal, closeConfirm,
+    alertModal, closeAlert 
+  } = useUIStore();
+
   return (
     <div className="min-h-screen bg-vybe-dark text-white flex">
       <Sidebar />
@@ -13,6 +21,16 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+      
+      <ConfirmModal 
+        confirmModal={confirmModal}
+        onClose={closeConfirm}
+      />
+      
+      <AlertModal 
+        alertModal={alertModal}
+        onClose={closeAlert}
+      />
     </div>
   );
 }

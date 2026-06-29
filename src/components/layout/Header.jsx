@@ -16,14 +16,7 @@ export default function Header() {
 
       {/* Right side: Search & Actions */}
       <div className="flex items-center gap-6">
-        <div className="relative group hidden md:block">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-vybe-neon transition-colors" />
-          <input 
-            type="text"
-            placeholder="Search orders, products..."
-            className="bg-vybe-dark border border-vybe-glassBorder rounded-full py-1.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon/50 w-64 transition-all"
-          />
-        </div>
+
 
         <button className="relative text-gray-400 hover:text-white transition-colors">
           <Bell className="w-5 h-5" />

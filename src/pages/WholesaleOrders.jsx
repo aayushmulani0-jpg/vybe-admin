@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
-import { Package, Eye, Send, X, CheckCircle, Truck, Clock, CreditCard, Building2, Download } from 'lucide-react';
+import { Package, Eye, Send, X, CheckCircle, Truck, Clock, CreditCard, Building2, Download, Search } from 'lucide-react';
 import MockupViewer from '../components/custom-print/MockupViewer';
+import { useUIStore } from '../store/useUIStore';
 
 export default function WholesaleOrders() {
   const { wholesaleOrders, updateOrderDetails, fetchOrders } = useOrderStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const { alert } = useUIStore();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [editShipping, setEditShipping] = useState({ courier: '', trackingNumber: '' });
 
@@ -47,8 +50,16 @@ export default function WholesaleOrders() {
   const handleUpdateShipping = () => {
     updateOrderDetails(selectedOrder.id, 'Wholesale', { shippingDetails: editShipping });
     setSelectedOrder({ ...selectedOrder, shippingDetails: editShipping });
-    alert('Logistics details updated.');
+    alert('Logistics details updated.', 'success', 'Success');
   };
+
+  const filteredOrders = wholesaleOrders.filter((order) => {
+    const query = searchQuery.toLowerCase();
+    const matchesId = order.id?.toLowerCase().includes(query);
+    const matchesCompany = order.company?.toLowerCase().includes(query);
+    const matchesCustomer = order.customer?.toLowerCase().includes(query) || order.contact?.toLowerCase().includes(query);
+    return matchesId || matchesCompany || matchesCustomer;
+  });
 
   return (
     <div className="space-y-6 pb-12">
@@ -56,6 +67,16 @@ export default function WholesaleOrders() {
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">Wholesale & B2B Orders</h1>
           <p className="text-sm text-gray-400">Manage bulk inquiries, quotes, production tracking, and B2B logistics.</p>
+        </div>
+        <div className="relative w-64">
+          <input
+            type="text"
+            placeholder="Search by ID or Company..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
+          />
+          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
       </div>
 
@@ -74,7 +95,7 @@ export default function WholesaleOrders() {
               </tr>
             </thead>
             <tbody>
-              {wholesaleOrders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-white">{order.id.slice(-8).toUpperCase()}</td>
                   <td className="px-6 py-4">{order.date || new Date(order.createdAt).toLocaleDateString()}</td>
@@ -101,7 +122,7 @@ export default function WholesaleOrders() {
                   </td>
                 </tr>
               ))}
-              {wholesaleOrders.length === 0 && (
+              {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan="7" className="px-6 py-16 text-center">
                     <div className="w-16 h-16 bg-vybe-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-vybe-glassBorder">

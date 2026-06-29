@@ -4,10 +4,12 @@ import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
 import { MapPin, Power, Save, Layers, Edit2, Trash2, Plus, X, Check, Star } from 'lucide-react';
 import { API_URL } from '../config';
+import { useUIStore } from '../store/useUIStore';
 
 export default function PrintSettings() {
   const { printLocations, fetchPrintLocations, updateLocation, loading } = usePrintSettingsStore();
   const [activeTab, setActiveTab] = useState('areas'); // 'areas' or 'templates'
+  const { alert, confirm } = useUIStore();
 
   // --- Print Areas State ---
   const [localLocations, setLocalLocations] = useState([]);
@@ -64,11 +66,12 @@ export default function PrintSettings() {
     try {
       const promises = localLocations.map(loc => updateLocation(loc._id, { cost: loc.cost, isActive: loc.isActive }));
       await Promise.all(promises);
+      await Promise.all(promises);
       await fetchPrintLocations();
-      alert('Print settings saved successfully!');
+      alert('Print settings saved successfully!', 'success', 'Success');
     } catch (error) {
       console.error('Error saving print settings:', error);
-      alert('Failed to save settings.');
+      alert('Failed to save settings.', 'error', 'Error');
     }
     setIsSavingAreas(false);
   };
@@ -93,25 +96,31 @@ export default function PrintSettings() {
         setIsEditingTemplate(false);
       } else {
         const errorData = await res.json();
-        alert(`Failed to save template: ${errorData.message || res.statusText}`);
+        alert(`Failed to save template: ${errorData.message || res.statusText}`, 'error', 'Error');
       }
     } catch (err) {
       console.error(err);
-      alert('Network error while saving template.');
+      alert('Network error while saving template.', 'error', 'Error');
     }
   };
 
-  const handleDeleteTemplate = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this template?')) return;
-    try {
-      await fetch(`${API_URL}/templates/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchTemplates();
-    } catch (err) {
-      console.error(err);
-    }
+  const handleDeleteTemplate = (id) => {
+    confirm({
+      title: 'Delete Template',
+      message: 'Are you sure you want to delete this template?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await fetch(`${API_URL}/templates/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          fetchTemplates();
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    });
   };
 
   const togglePrintAreaInTemplate = (areaName) => {

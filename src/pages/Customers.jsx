@@ -2,15 +2,23 @@ import { useState, useEffect } from 'react';
 import { useCustomerStore } from '../store/useCustomerStore';
 import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
-import { Users, Eye, X, Mail, ShoppingBag, TrendingUp, Calendar, MapPin, Tag } from 'lucide-react';
+import { Users, Eye, X, Mail, ShoppingBag, TrendingUp, Calendar, MapPin, Tag, Search } from 'lucide-react';
 
 export default function Customers() {
   const { customers, isLoading, fetchCustomersAndOrders } = useCustomerStore();
   const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchCustomersAndOrders();
   }, [fetchCustomersAndOrders]);
+
+  const filteredCustomers = customers.filter((customer) => {
+    const query = searchQuery.toLowerCase();
+    const matchesName = customer.name?.toLowerCase().includes(query);
+    const matchesEmail = customer.email?.toLowerCase().includes(query);
+    return matchesName || matchesEmail;
+  });
 
   return (
     <div className="space-y-6 pb-12">
@@ -18,6 +26,16 @@ export default function Customers() {
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">Customers</h1>
           <p className="text-sm text-gray-400">View registered users, order history, and lifetime value.</p>
+        </div>
+        <div className="relative w-64">
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
+          />
+          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
       </div>
 
@@ -38,7 +56,7 @@ export default function Customers() {
                 </tr>
               </thead>
               <tbody>
-                {customers.map((customer) => (
+                {filteredCustomers.map((customer) => (
                   <tr key={customer._id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
                     <td className="px-6 py-4 font-medium text-white">{customer.name}</td>
                     <td className="px-6 py-4">{customer.email}</td>
@@ -60,7 +78,7 @@ export default function Customers() {
                     </td>
                   </tr>
                 ))}
-                {customers.length === 0 && !isLoading && (
+                {filteredCustomers.length === 0 && !isLoading && (
                   <tr>
                     <td colSpan="6" className="px-6 py-16 text-center">
                       <div className="w-16 h-16 bg-vybe-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-vybe-glassBorder">

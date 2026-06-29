@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
-import { ShoppingCart, Eye, FileText, X, CheckCircle, Truck, Package, Clock, CreditCard } from 'lucide-react';
+import { ShoppingCart, Eye, FileText, X, CheckCircle, Truck, Package, Clock, CreditCard, Search } from 'lucide-react';
+import { useUIStore } from '../store/useUIStore';
 
 export default function RetailOrders() {
   const { retailOrders, updateOrderDetails, fetchOrders } = useOrderStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const { alert } = useUIStore();
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Editable fields for shipping
   const [editShipping, setEditShipping] = useState({ courier: '', trackingNumber: '' });
@@ -46,8 +49,16 @@ export default function RetailOrders() {
   const handleUpdateShipping = () => {
     updateOrderDetails(selectedOrder.id, 'Retail', { shippingDetails: editShipping });
     setSelectedOrder({ ...selectedOrder, shippingDetails: editShipping });
-    alert('Tracking details updated.');
+    alert('Tracking details updated.', 'success', 'Success');
   };
+
+  const filteredOrders = retailOrders.filter((order) => {
+    const query = searchQuery.toLowerCase();
+    const matchesId = order.id?.toLowerCase().includes(query);
+    const matchesCustomer = order.customer?.toLowerCase().includes(query);
+    const matchesEmail = order.email?.toLowerCase().includes(query);
+    return matchesId || matchesCustomer || matchesEmail;
+  });
 
   return (
     <div className="space-y-6 pb-12">
@@ -55,6 +66,16 @@ export default function RetailOrders() {
         <div>
           <h1 className="text-2xl font-bold text-white mb-1">Retail Orders</h1>
           <p className="text-sm text-gray-400">Manage individual consumer orders, payments, and shipping.</p>
+        </div>
+        <div className="relative w-64">
+          <input
+            type="text"
+            placeholder="Search by ID or Name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
+          />
+          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
         </div>
       </div>
 
@@ -73,7 +94,7 @@ export default function RetailOrders() {
               </tr>
             </thead>
             <tbody>
-              {retailOrders.map((order) => (
+              {filteredOrders.map((order) => (
                 <tr key={order.id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-white">{order.id.slice(-8).toUpperCase()}</td>
                   <td className="px-6 py-4">{order.date || new Date(order.createdAt).toLocaleDateString()}</td>
@@ -102,7 +123,7 @@ export default function RetailOrders() {
                   </td>
                 </tr>
               ))}
-              {retailOrders.length === 0 && (
+              {filteredOrders.length === 0 && (
                 <tr>
                   <td colSpan="7" className="px-6 py-16 text-center">
                     <div className="w-16 h-16 bg-vybe-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-vybe-glassBorder">
