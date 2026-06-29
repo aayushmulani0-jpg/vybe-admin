@@ -10,7 +10,9 @@ import {
   BookOpen,
   FileText,
   DollarSign,
-  LogOut
+  LogOut,
+  Layers,
+  Image as ImageIcon
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAdminAuthStore } from '../../store/useAdminAuthStore';
@@ -23,8 +25,9 @@ const NAV_ITEMS = [
   { name: 'Wholesale Orders', path: '/wholesale-orders', icon: Package },
   { name: 'Custom Print', path: '/custom-print', icon: Palette },
   { name: 'Wholesale Catalogues', path: '/catalogues', icon: BookOpen },
+  { name: 'Collections & Drops', path: '/collections', icon: Layers },
+  { name: 'Marketing Banners', path: '/banners', icon: ImageIcon },
   { name: 'Customers', path: '/customers', icon: Users },
-  { name: 'Quotations', path: '/quotes', icon: FileText },
   { name: 'Global Pricing', path: '/pricing', icon: DollarSign },
   { name: 'Settings', path: '/settings', icon: Settings },
 ];
@@ -93,7 +96,7 @@ export default function Sidebar() {
               <p className="text-xs text-gray-500 truncate capitalize">{user?.role || 'Super Admin'}</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={handleLogout}
             className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors shrink-0"
             title="Logout"

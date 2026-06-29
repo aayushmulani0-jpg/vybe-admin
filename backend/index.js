@@ -32,6 +32,9 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/api/templates', require('./routes/templateRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/banners', require('./routes/bannerRoutes'));
+app.use('/api/collections', require('./routes/collectionRoutes'));
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

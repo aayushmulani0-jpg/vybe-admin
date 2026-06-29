@@ -12,13 +12,15 @@ import Pricing from './pages/Pricing';
 import Customers from './pages/Customers';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Collections from './pages/Collections';
+import Banners from './pages/Banners';
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      
+
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
@@ -29,6 +31,8 @@ function App() {
         <Route path="catalogues" element={<CatalogueEditor />} />
         <Route path="pricing" element={<Pricing />} />
         <Route path="customers" element={<Customers />} />
+        <Route path="collections" element={<Collections />} />
+        <Route path="banners" element={<Banners />} />
         {/* We will add other routes here (Settings, etc.) */}
       </Route>
     </Routes>

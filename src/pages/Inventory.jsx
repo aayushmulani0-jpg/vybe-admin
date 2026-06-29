@@ -4,7 +4,7 @@ import GlassCard from '../components/common/GlassCard';
 import Button from '../components/common/Button';
 import Input from '../components/common/Input';
 import ImageDropzone from '../components/common/ImageDropzone';
-import { Package, Trash2, Plus } from 'lucide-react';
+import { Package, Trash2, Plus, Edit2, X } from 'lucide-react';
 
 export default function Inventory() {
   const { 
@@ -21,9 +21,9 @@ export default function Inventory() {
   }, [fetchProducts]);
   
   const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
-  // Form State
-  const [newProduct, setNewProduct] = useState({
+  const initialFormState = {
     name: '',
     price: '',
     comparePrice: '',
@@ -33,8 +33,14 @@ export default function Inventory() {
     images: [],
     sizes: [],
     colors: [],
-    allowCustomPrint: false
-  });
+    allowCustomPrint: false,
+    isBestSeller: false,
+    isRecommended: false,
+    isNewArrival: false
+  };
+
+  // Form State
+  const [newProduct, setNewProduct] = useState(initialFormState);
 
   const [colorInput, setColorInput] = useState('#000000');
 
@@ -55,6 +61,26 @@ export default function Inventory() {
         ? prev.sizes.filter(s => s !== size)
         : [...prev.sizes, size]
     }));
+  };
+
+  const handleEditClick = (product) => {
+    setEditingId(product.id);
+    setNewProduct({
+      name: product.name || '',
+      price: product.price || '',
+      comparePrice: product.comparePrice || '',
+      stockStatus: product.stockStatus || 'In Stock',
+      discountBadge: product.discountBadge || '',
+      image: product.image || '',
+      images: product.images || [],
+      sizes: product.sizes || [],
+      colors: product.colors || [],
+      allowCustomPrint: product.allowCustomPrint || false,
+      isBestSeller: product.isBestSeller || false,
+      isRecommended: product.isRecommended || false,
+      isNewArrival: product.isNewArrival || false
+    });
+    setShowAddForm(true);
   };
 
   const handleAdd = (e) => {
@@ -78,14 +104,22 @@ export default function Inventory() {
       return;
     }
 
-    addProduct({
+    const payload = {
       ...newProduct,
       price: Number(newProduct.price),
       comparePrice: newProduct.comparePrice ? Number(newProduct.comparePrice) : null,
       images: newProduct.images.filter(img => img.trim() !== '') // Clean empty URLs
-    });
+    };
+
+    if (editingId) {
+      updateProduct(editingId, payload);
+    } else {
+      addProduct(payload);
+    }
+
     setShowAddForm(false);
-    setNewProduct({ name: '', price: '', comparePrice: '', stockStatus: 'In Stock', discountBadge: '', image: newProduct.image, images: [], sizes: [], colors: [], allowCustomPrint: false });
+    setEditingId(null);
+    setNewProduct(initialFormState);
   };
 
   return (
@@ -95,15 +129,22 @@ export default function Inventory() {
           <h1 className="text-2xl font-bold text-white mb-1">Inventory Management</h1>
           <p className="text-sm text-gray-400">Manage your product stock, badges, prices, and catalog.</p>
         </div>
-        <Button onClick={() => setShowAddForm(!showAddForm)}>
+        <Button onClick={() => {
+          setEditingId(null);
+          setNewProduct(initialFormState);
+          setShowAddForm(!showAddForm);
+        }}>
           <Plus className="w-4 h-4 mr-2" />
           Add Product
         </Button>
       </div>
 
       {showAddForm && (
-        <GlassCard className="p-6">
-          <h2 className="text-lg font-semibold mb-4 text-white">List New Product</h2>
+        <GlassCard className="p-6 relative">
+          <button onClick={() => setShowAddForm(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white bg-vybe-glass rounded-full transition-colors z-10">
+            <X className="w-5 h-5" />
+          </button>
+          <h2 className="text-lg font-semibold mb-4 text-white">{editingId ? 'Edit Product' : 'List New Product'}</h2>
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
@@ -259,12 +300,27 @@ export default function Inventory() {
                   </label>
                   <p className="text-xs text-gray-500 mt-1 pl-1">If checked, users will see the "Want Custom Prints?" button for this product.</p>
                 </div>
+                <div className="pt-4 border-t border-vybe-glassBorder space-y-3">
+                  <label className="block text-sm font-medium text-gray-400 mb-2">Display Tags</label>
+                  <label className="flex items-center gap-2 cursor-pointer bg-vybe-dark p-3 rounded-lg border border-vybe-glassBorder hover:border-vybe-neon transition-colors">
+                    <input type="checkbox" checked={newProduct.isBestSeller} onChange={(e) => setNewProduct({ ...newProduct, isBestSeller: e.target.checked })} className="w-4 h-4 accent-vybe-neon" />
+                    <span className="text-sm font-medium text-white">Best Seller</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer bg-vybe-dark p-3 rounded-lg border border-vybe-glassBorder hover:border-vybe-neon transition-colors">
+                    <input type="checkbox" checked={newProduct.isRecommended} onChange={(e) => setNewProduct({ ...newProduct, isRecommended: e.target.checked })} className="w-4 h-4 accent-vybe-neon" />
+                    <span className="text-sm font-medium text-white">Recommended</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer bg-vybe-dark p-3 rounded-lg border border-vybe-glassBorder hover:border-vybe-neon transition-colors">
+                    <input type="checkbox" checked={newProduct.isNewArrival} onChange={(e) => setNewProduct({ ...newProduct, isNewArrival: e.target.checked })} className="w-4 h-4 accent-vybe-neon" />
+                    <span className="text-sm font-medium text-white">New Arrival</span>
+                  </label>
+                </div>
               </div>
 
             </div>
             <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-vybe-glassBorder">
               <Button type="button" variant="ghost" onClick={() => setShowAddForm(false)}>Cancel</Button>
-              <Button type="submit" variant="primary">Publish Product</Button>
+              <Button type="submit" variant="primary">{editingId ? 'Save Changes' : 'Publish Product'}</Button>
             </div>
           </form>
         </GlassCard>
@@ -386,7 +442,10 @@ export default function Inventory() {
                       className="bg-vybe-dark border border-transparent hover:border-vybe-glassBorder rounded px-2 py-1 text-sm w-16 focus:outline-none focus:border-vybe-neon text-white transition-colors"
                     /> <span className="text-gray-400 text-xs">%</span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 flex items-center gap-2">
+                    <button onClick={() => handleEditClick(product)} className="p-2 text-gray-400 hover:text-vybe-neon transition-colors rounded-lg hover:bg-vybe-neon/10" title="Edit Product">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
                     <button onClick={() => deleteProduct(product.id)} className="p-2 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-500/10" title="Delete Product">
                       <Trash2 className="w-4 h-4" />
                     </button>

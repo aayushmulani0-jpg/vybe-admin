@@ -50,9 +50,9 @@ export default function Customers() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button 
+                      <button
                         onClick={() => setSelectedCustomer(customer)}
-                        className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-vybe-glassBorder" 
+                        className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-vybe-glassBorder"
                         title="View Full Profile"
                       >
                         <Eye className="w-4 h-4" />
@@ -81,7 +81,7 @@ export default function Customers() {
       {selectedCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-[#1A1A1A] w-full max-w-5xl h-[90vh] border border-white/10 rounded-xl shadow-2xl relative flex flex-col">
-            
+
             {/* Header */}
             <div className="p-6 border-b border-white/10 flex justify-between items-start bg-[#1A1A1A] z-10 rounded-t-xl shrink-0">
               <div className="flex items-center gap-4">
@@ -106,10 +106,10 @@ export default function Customers() {
             </div>
 
             <div className="p-6 flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
+
               {/* Left Column: Contact & Stats */}
               <div className="space-y-6">
-                
+
                 {/* Stats Summary */}
                 <div className="bg-black/20 p-5 rounded-lg border border-white/5">
                   <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Customer Value</h3>
@@ -168,18 +168,18 @@ export default function Customers() {
                     <ShoppingBag className="w-4 h-4 text-gray-400" />
                     <h3 className="text-sm font-semibold text-white">Purchase Ledger</h3>
                   </div>
-                  
+
                   <div className="p-5 flex-1 overflow-y-auto custom-scrollbar">
                     {selectedCustomer.purchasedItems && selectedCustomer.purchasedItems.length > 0 ? (
                       <div className="space-y-4">
                         {selectedCustomer.purchasedItems.map((item, idx) => (
                           <div key={idx} className="flex gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-lg hover:border-white/10 transition-colors">
                             <div className="w-20 h-20 bg-neutral-900 rounded border border-white/10 overflow-hidden flex-shrink-0">
-                              <img 
-                                src={item.image || 'https://via.placeholder.com/150'} 
-                                alt={item.name} 
+                              <img
+                                src={item.image || 'https://via.placeholder.com/150'}
+                                alt={item.name}
                                 onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/150'; }}
-                                className="w-full h-full object-cover" 
+                                className="w-full h-full object-cover"
                               />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -190,11 +190,10 @@ export default function Customers() {
                                     <span className="text-xs text-gray-400 bg-neutral-900 px-2 py-0.5 rounded border border-white/5">Order: #{item.orderId?.slice(-6).toUpperCase()}</span>
                                     <span className="text-[10px] text-gray-500">{item.orderDate}</span>
                                     {item.orderType && (
-                                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase ${
-                                        item.orderType === 'Wholesale' ? 'text-blue-400 bg-blue-500/10 border-blue-500/30' :
+                                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase ${item.orderType === 'Wholesale' ? 'text-blue-400 bg-blue-500/10 border-blue-500/30' :
                                         item.orderType === 'CustomPrint' ? 'text-purple-400 bg-purple-500/10 border-purple-500/30' :
-                                        'text-vybe-neon bg-vybe-neon/10 border-vybe-neon/30'
-                                      }`}>
+                                          'text-vybe-neon bg-vybe-neon/10 border-vybe-neon/30'
+                                        }`}>
                                         {item.orderType}
                                       </span>
                                     )}
@@ -202,7 +201,7 @@ export default function Customers() {
                                 </div>
                                 <span className="font-bold text-white text-lg ml-2">₹{(item.itemTotal || (item.price * item.qty)).toLocaleString()}</span>
                               </div>
-                              
+
                               <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-400">
                                 <span>Qty: <span className="text-white font-medium">{item.qty}</span> @ ₹{item.price}</span>
                                 {(item.selectedSize || item.selectedColor) && (
@@ -210,8 +209,8 @@ export default function Customers() {
                                     <span className="text-white/20">|</span>
                                     {item.selectedSize && <span>Size: <span className="text-white font-medium">{item.selectedSize}</span></span>}
                                     {item.selectedColor && (
-                                      <span className="flex items-center gap-1">Color: 
-                                        <span className="w-3 h-3 rounded-full border border-white/20 inline-block ml-1" style={{backgroundColor: item.selectedColor.toLowerCase()}}></span>
+                                      <span className="flex items-center gap-1">Color:
+                                        <span className="w-3 h-3 rounded-full border border-white/20 inline-block ml-1" style={{ backgroundColor: item.selectedColor.toLowerCase() }}></span>
                                         <span className="text-white font-medium">{item.selectedColor}</span>
                                       </span>
                                     )}
@@ -248,7 +247,7 @@ export default function Customers() {
                   </div>
                 </div>
               </div>
-              
+
             </div>
           </div>
         </div>
