@@ -35,7 +35,9 @@ export default function Inventory() {
     image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=400',
     images: [],
     sizes: [],
+    outOfStockSizes: [],
     colors: [],
+    outOfStockColors: [],
     allowCustomPrint: false,
     isBestSeller: false,
     isRecommended: false,
@@ -58,12 +60,30 @@ export default function Inventory() {
   };
 
   const handleSizeToggle = (size) => {
-    setNewProduct(prev => ({
-      ...prev,
-      sizes: prev.sizes.includes(size) 
-        ? prev.sizes.filter(s => s !== size)
-        : [...prev.sizes, size]
-    }));
+    setNewProduct(prev => {
+      const isSelected = prev.sizes.includes(size);
+      return {
+        ...prev,
+        sizes: isSelected 
+          ? prev.sizes.filter(s => s !== size)
+          : [...prev.sizes, size],
+        outOfStockSizes: isSelected 
+          ? prev.outOfStockSizes.filter(s => s !== size) 
+          : prev.outOfStockSizes
+      };
+    });
+  };
+
+  const handleStockToggle = (type, value) => {
+    setNewProduct(prev => {
+      const list = prev[type] || [];
+      return {
+        ...prev,
+        [type]: list.includes(value) 
+          ? list.filter(item => item !== value)
+          : [...list, value]
+      };
+    });
   };
 
   const handleEditClick = (product) => {
@@ -77,7 +97,9 @@ export default function Inventory() {
       image: product.image || '',
       images: product.images || [],
       sizes: product.sizes || [],
+      outOfStockSizes: product.outOfStockSizes || [],
       colors: product.colors || [],
+      outOfStockColors: product.outOfStockColors || [],
       allowCustomPrint: product.allowCustomPrint || false,
       isBestSeller: product.isBestSeller || false,
       isRecommended: product.isRecommended || false,
@@ -231,21 +253,44 @@ export default function Inventory() {
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-400 mb-1">Available Sizes</label>
-                  <div className="flex gap-2">
-                    {['S', 'M', 'L', 'XL'].map(size => (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => handleSizeToggle(size)}
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center font-medium transition-colors ${
-                          newProduct.sizes?.includes(size)
-                            ? 'bg-vybe-neon text-black'
-                            : 'bg-vybe-dark text-gray-400 border border-vybe-glassBorder hover:border-vybe-neon'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+                  <div className="flex flex-col gap-3">
+                    <div className="flex gap-2">
+                      {['S', 'M', 'L', 'XL'].map(size => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => handleSizeToggle(size)}
+                          className={`w-10 h-10 rounded-lg flex items-center justify-center font-medium transition-colors ${
+                            newProduct.sizes?.includes(size)
+                              ? 'bg-vybe-neon text-black'
+                              : 'bg-vybe-dark text-gray-400 border border-vybe-glassBorder hover:border-vybe-neon'
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      ))}
+                    </div>
+                    {newProduct.sizes?.length > 0 && (
+                      <div className="p-3 bg-vybe-dark rounded-lg border border-vybe-glassBorder">
+                        <label className="block text-xs font-medium text-gray-400 mb-2">Mark specific sizes as Out of Stock:</label>
+                        <div className="flex gap-2 flex-wrap">
+                          {newProduct.sizes.map(size => (
+                            <button
+                              key={size}
+                              type="button"
+                              onClick={() => handleStockToggle('outOfStockSizes', size)}
+                              className={`px-2 py-1 text-xs rounded transition-colors ${
+                                newProduct.outOfStockSizes?.includes(size)
+                                  ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                                  : 'bg-transparent text-gray-400 border border-vybe-glassBorder hover:border-gray-500'
+                              }`}
+                            >
+                              {size} {newProduct.outOfStockSizes?.includes(size) ? '(OOS)' : ''}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
@@ -261,15 +306,37 @@ export default function Inventory() {
                     <Button type="button" variant="outline" size="sm" onClick={handleAddColor}>Add Color</Button>
                   </div>
                   {newProduct.colors?.length > 0 && (
-                    <div className="flex gap-2 flex-wrap">
-                      {newProduct.colors.map(color => (
-                        <div key={color} className="relative group cursor-pointer" onClick={() => handleRemoveColor(color)} title="Click to remove">
-                          <div className="w-6 h-6 rounded border border-gray-600" style={{ backgroundColor: color }}></div>
-                          <div className="absolute inset-0 bg-red-500/80 rounded opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Trash2 className="w-3 h-3 text-white" />
+                    <div className="space-y-3">
+                      <div className="flex gap-2 flex-wrap">
+                        {newProduct.colors.map(color => (
+                          <div key={color} className="relative group cursor-pointer" onClick={() => handleRemoveColor(color)} title="Click to remove">
+                            <div className={`w-6 h-6 rounded border ${newProduct.outOfStockColors?.includes(color) ? 'border-red-500 opacity-50' : 'border-gray-600'}`} style={{ backgroundColor: color }}></div>
+                            <div className="absolute inset-0 bg-red-500/80 rounded opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                              <Trash2 className="w-3 h-3 text-white" />
+                            </div>
                           </div>
+                        ))}
+                      </div>
+                      <div className="p-3 bg-vybe-dark rounded-lg border border-vybe-glassBorder">
+                        <label className="block text-xs font-medium text-gray-400 mb-2">Mark specific colors as Out of Stock:</label>
+                        <div className="flex gap-2 flex-wrap">
+                          {newProduct.colors.map(color => (
+                            <button
+                              key={color}
+                              type="button"
+                              onClick={() => handleStockToggle('outOfStockColors', color)}
+                              className={`flex items-center gap-1.5 px-2 py-1 text-xs rounded transition-colors ${
+                                newProduct.outOfStockColors?.includes(color)
+                                  ? 'bg-red-500/20 text-red-400 border border-red-500/50'
+                                  : 'bg-transparent text-gray-400 border border-vybe-glassBorder hover:border-gray-500'
+                              }`}
+                            >
+                              <div className="w-3 h-3 rounded-full border border-gray-600" style={{ backgroundColor: color }}></div>
+                              {newProduct.outOfStockColors?.includes(color) ? 'OOS' : 'In Stock'}
+                            </button>
+                          ))}
                         </div>
-                      ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -388,9 +455,18 @@ export default function Inventory() {
                     <div className="space-y-2">
                       {product.sizes && product.sizes.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
-                          {product.sizes.map(size => (
-                            <span key={size} className="text-[10px] px-1.5 py-0.5 rounded bg-vybe-dark text-gray-300 border border-gray-600">{size}</span>
-                          ))}
+                          {product.sizes.map(size => {
+                            const isOOS = product.outOfStockSizes?.includes(size);
+                            return (
+                              <span key={size} className={`text-[10px] px-1.5 py-0.5 rounded border ${
+                                isOOS 
+                                  ? 'bg-red-500/10 text-red-400 border-red-500/30 line-through' 
+                                  : 'bg-vybe-dark text-gray-300 border-gray-600'
+                              }`}>
+                                {size}
+                              </span>
+                            );
+                          })}
                         </div>
                       ) : (
                         <span className="text-xs text-gray-500 block">-</span>
@@ -398,9 +474,15 @@ export default function Inventory() {
                       
                       {product.colors && product.colors.length > 0 && (
                         <div className="flex flex-wrap gap-1">
-                          {product.colors.map(color => (
-                            <div key={color} className="w-3 h-3 rounded-full border border-gray-600" style={{ backgroundColor: color }} title={color}></div>
-                          ))}
+                          {product.colors.map(color => {
+                            const isOOS = product.outOfStockColors?.includes(color);
+                            return (
+                              <div key={color} className="relative">
+                                <div className={`w-3 h-3 rounded-full border border-gray-600 ${isOOS ? 'opacity-50' : ''}`} style={{ backgroundColor: color }} title={color + (isOOS ? ' (Out of Stock)' : '')}></div>
+                                {isOOS && <div className="absolute inset-0 flex items-center justify-center"><div className="w-4 h-0.5 bg-red-500 rotate-45 absolute"></div></div>}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     </div>

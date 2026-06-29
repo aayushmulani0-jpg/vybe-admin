@@ -233,11 +233,11 @@ export default function Settings() {
                 <textarea
                   value={formData.general?.announcement || ''}
                   onChange={(e) => handleNestedChange('general', 'announcement', e.target.value)}
-                  placeholder="Enter a message to display at the top of the storefront (leave blank to hide)"
+                  placeholder="Enter a message. For a scrolling marquee with multiple notices, enter each on a new line."
                   className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-3 text-white focus:outline-none focus:border-vybe-neon transition-colors resize-none"
-                  rows={2}
+                  rows={3}
                 />
-                <p className="text-xs text-gray-500 mt-2">This will appear on all pages of the storefront.</p>
+                <p className="text-xs text-gray-500 mt-2">This will appear on all pages of the storefront. If you enter multiple lines, it will scroll like a marquee.</p>
               </div>
             </div>
           </div>
