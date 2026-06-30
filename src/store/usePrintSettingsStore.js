@@ -19,9 +19,13 @@ export const usePrintSettingsStore = create((set, get) => ({
 
   updateLocation: async (id, updates) => {
     try {
+      const token = localStorage.getItem('vybe-admin-token');
       const res = await fetch(`${API_URL}/print-locations/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(updates),
       });
       if (res.ok) {
@@ -37,9 +41,13 @@ export const usePrintSettingsStore = create((set, get) => ({
 
   addLocation: async (locationData) => {
     try {
+      const token = localStorage.getItem('vybe-admin-token');
       const res = await fetch(`${API_URL}/print-locations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(locationData),
       });
       if (res.ok) {
@@ -58,16 +66,23 @@ export const usePrintSettingsStore = create((set, get) => ({
 
   deleteLocation: async (id) => {
     try {
+      const token = localStorage.getItem('vybe-admin-token');
       const res = await fetch(`${API_URL}/print-locations/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
       if (res.ok) {
         set(state => ({
           printLocations: state.printLocations.filter(loc => loc._id !== id)
         }));
+        return true;
       }
+      return false;
     } catch (error) {
       console.error('Failed to delete print location:', error);
+      return false;
     }
   }
 }));

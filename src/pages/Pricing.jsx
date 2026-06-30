@@ -1,16 +1,22 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Save, Plus, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Trash2, DollarSign, Edit2 } from 'lucide-react';
 import { useUIStore } from '../store/useUIStore';
 import { API_URL } from '../config';
+import { Card, Input, Button, Typography, Row, Col, Select, Spin, Empty, Modal, Form } from 'antd';
+
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 export default function Pricing() {
   const [pricingConfigs, setPricingConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [currentRule, setCurrentRule] = useState(null);
+  
   const { alert, confirm } = useUIStore();
-
   const token = localStorage.getItem('vybe-admin-token');
+  const [form] = Form.useForm();
 
   useEffect(() => {
     fetchPricing();
@@ -28,74 +34,86 @@ export default function Pricing() {
     }
   };
 
-  const handleInputChange = (id, field, value) => {
-    setPricingConfigs(prev => 
-      prev.map(config => 
-        config._id === id ? { ...config, [field]: value } : config
-      )
-    );
+  const openAddModal = () => {
+    setCurrentRule(null);
+    form.resetFields();
+    form.setFieldsValue({
+      name: '',
+      value: 0,
+      currency: 'INR',
+      type: 'fixed',
+      action: 'add',
+      minSubtotal: 0,
+      description: ''
+    });
+    setIsModalVisible(true);
   };
 
-  const handleSave = async () => {
+  const openEditModal = (rule) => {
+    setCurrentRule(rule);
+    form.setFieldsValue(rule);
+    setIsModalVisible(true);
+  };
+
+  const handleModalSave = async (values) => {
     setSaving(true);
+    
+    // Ensure numeric fields are cast to numbers
+    const payload = {
+      ...values,
+      value: Number(values.value) || 0,
+      minSubtotal: Number(values.minSubtotal) || 0,
+      currency: 'INR'
+    };
+
     try {
-      // Create an array of update promises
-      const updatePromises = pricingConfigs.map(config => {
-        if (config._id) {
-          return fetch(`${API_URL}/pricing/${config._id}`, {
+      if (currentRule && currentRule._id) {
+        // Editing existing rule
+        await fetch(`${API_URL}/pricing/${currentRule._id}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        // Creating new rule
+        const res = await fetch(`${API_URL}/pricing`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify(payload)
+        });
+        const savedData = await res.json();
+        
+        // WORKAROUND: The remote backend ignores 'action' and 'minSubtotal' in POST.
+        // We immediately do a PUT to update the missing fields.
+        if (savedData && savedData._id) {
+          await fetch(`${API_URL}/pricing/${savedData._id}`, {
             method: 'PUT',
             headers: { 
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}` 
             },
-            body: JSON.stringify(config)
-          });
-        } else {
-          return fetch(`${API_URL}/pricing`, {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}` 
-            },
-            body: JSON.stringify(config)
+            body: JSON.stringify({ ...savedData, ...payload })
           });
         }
-      });
+      }
       
-      await Promise.all(updatePromises);
-      alert('Pricing configurations saved successfully!', 'success', 'Success');
-      fetchPricing(); // Refresh to get proper IDs for new items
+      alert(`Pricing configuration ${currentRule ? 'updated' : 'added'} successfully!`, 'success', 'Success');
+      setIsModalVisible(false);
+      fetchPricing();
     } catch (error) {
       console.error('Error saving pricing:', error);
-      alert('Failed to save pricing configurations.', 'error', 'Error');
+      alert('Failed to save pricing configuration.', 'error', 'Error');
     }
     setSaving(false);
   };
 
-  const addNewConfig = () => {
-    setPricingConfigs([
-      ...pricingConfigs,
-      {
-        name: 'New Rule',
-        value: 0,
-        currency: 'INR',
-        type: 'fixed',
-        action: 'add',
-        minSubtotal: 0,
-        description: ''
-      }
-    ]);
-  };
-
-  const handleDelete = async (id, index) => {
-    if (!id) {
-      // Remove from local state if it hasn't been saved yet
-      const newConfigs = [...pricingConfigs];
-      newConfigs.splice(index, 1);
-      setPricingConfigs(newConfigs);
-      return;
-    }
-    
+  const handleDelete = async (id) => {
     confirm({
       title: 'Delete Pricing Config',
       message: 'Are you sure you want to delete this pricing configuration?',
@@ -116,137 +134,138 @@ export default function Pricing() {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="w-8 h-8 border-4 border-vybe-neon border-t-transparent rounded-full animate-spin"></div>
+      <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center' }}>
+        <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div className="p-8 pb-24 h-full overflow-y-auto custom-scrollbar">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-end mb-8">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Discounts & Charges</h1>
-            <p className="text-gray-400">Manage base fees, delivery charges, and dynamic discount templates.</p>
-          </div>
-          <div className="flex gap-4">
-            <button 
-              onClick={addNewConfig}
-              className="flex items-center gap-2 px-4 py-2 bg-vybe-dark border border-vybe-glassBorder text-white rounded-lg hover:bg-vybe-glass transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add Rule
-            </button>
-            <button 
-              onClick={handleSave}
-              disabled={saving}
-              className="flex items-center gap-2 px-4 py-2 bg-vybe-neon text-black font-semibold rounded-lg hover:bg-opacity-90 transition-colors disabled:opacity-50"
-            >
-              <Save className="w-4 h-4" />
-              {saving ? 'Saving...' : 'Save Changes'}
-            </button>
-          </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px', maxWidth: '900px', margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <Title level={3} style={{  margin: 0, marginBottom: '8px' }}>Discounts & Charges</Title>
+          <Text type="secondary">Manage base fees, delivery charges, and dynamic discount templates.</Text>
         </div>
-
-        <div className="bg-vybe-surface border border-vybe-glassBorder rounded-xl overflow-hidden">
-          {pricingConfigs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              No pricing configurations found. Add one to get started.
-            </div>
-          ) : (
-            <div className="divide-y divide-vybe-glassBorder">
-              {pricingConfigs.map((config, index) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  key={config._id || index} 
-                  className="p-6 flex flex-col md:flex-row gap-6 items-start md:items-center hover:bg-white/[0.02] transition-colors"
-                >
-                  <div className="flex-1 space-y-4 w-full">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Fee Name</label>
-                        <input
-                          type="text"
-                          value={config.name}
-                          onChange={(e) => handleInputChange(config._id, 'name', e.target.value)}
-                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
-                          placeholder="e.g., Delivery Fee"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Value</label>
-                        <div className="relative">
-                          <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <input
-                            type="number"
-                            value={config.value === 0 ? '' : config.value}
-                            onChange={(e) => handleInputChange(config._id, 'value', e.target.value === '' ? 0 : Number(e.target.value))}
-                            className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-9 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 text-xs font-bold">{config.type === 'percentage' ? '%' : 'INR'}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Format</label>
-                        <select
-                          value={config.type || 'fixed'}
-                          onChange={(e) => handleInputChange(config._id, 'type', e.target.value)}
-                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all appearance-none"
-                        >
-                          <option value="fixed">Fixed Amount</option>
-                          <option value="percentage">Percentage (%)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Type</label>
-                        <select
-                          value={config.action || 'add'}
-                          onChange={(e) => handleInputChange(config._id, 'action', e.target.value)}
-                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all appearance-none"
-                        >
-                          <option value="add">Additional Charge (+)</option>
-                          <option value="subtract">Discount (-)</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Min. Order Amount (INR)</label>
-                        <input
-                          type="number"
-                          value={config.minSubtotal === 0 ? '' : (config.minSubtotal || '')}
-                          onChange={(e) => handleInputChange(config._id, 'minSubtotal', e.target.value === '' ? 0 : Number(e.target.value))}
-                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
-                          placeholder="e.g. 50000 (leave empty for no limit)"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Description (Optional)</label>
-                        <input
-                          type="text"
-                          value={config.description || ''}
-                          onChange={(e) => handleInputChange(config._id, 'description', e.target.value)}
-                          className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 text-white focus:outline-none focus:border-vybe-neon focus:ring-1 focus:ring-vybe-neon transition-all"
-                          placeholder="Explain when this rule applies..."
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <button 
-                    onClick={() => handleDelete(config._id, index)}
-                    className="p-2 text-gray-500 hover:text-red-500 bg-vybe-dark border border-vybe-glassBorder rounded-lg hover:border-red-500/50 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </motion.div>
-              ))}
-            </div>
-          )}
-        </div>
+        <Button type="primary" icon={<Plus size={16} />} onClick={openAddModal} style={{ fontWeight: 600, color: '#000' }}>
+          Add Rule
+        </Button>
       </div>
+
+      <Card bodyStyle={{ padding: 0 }}>
+        {pricingConfigs.length === 0 ? (
+          <Empty 
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={<Text type="secondary">No pricing configurations found. Add one to get started.</Text>}
+            style={{ padding: '48px 0' }}
+          />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {pricingConfigs.map((config, index) => (
+              <div 
+                key={config._id || index} 
+                style={{ 
+                  padding: '24px', 
+                  borderBottom: index !== pricingConfigs.length - 1 ? '1px solid #333' : 'none',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <Title level={5} style={{ margin: 0, marginBottom: '4px' }}>{config.name}</Title>
+                  <Text type="secondary" style={{ display: 'block', marginBottom: '8px' }}>{config.description || 'No description provided.'}</Text>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    <Text strong>
+                      {config.action === 'subtract' ? 'Discount: ' : 'Additional Charge: '}
+                      {config.type === 'percentage' ? `${config.value}%` : `₹${config.value}`}
+                    </Text>
+                    {config.minSubtotal > 0 && (
+                      <Text type="secondary">Min. Order: ₹{config.minSubtotal}</Text>
+                    )}
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button 
+                    type="text" 
+                    icon={<Edit2 size={16} />} 
+                    onClick={() => openEditModal(config)}
+                    title="Edit Rule"
+                  />
+                  <Button 
+                    type="text" 
+                    danger 
+                    icon={<Trash2 size={16} />} 
+                    onClick={() => handleDelete(config._id)}
+                    title="Delete Rule"
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Modal
+        title={<Title level={4} style={{ margin: 0 }}>{currentRule ? 'Edit Pricing Rule' : 'Add Pricing Rule'}</Title>}
+        open={isModalVisible}
+        onCancel={() => !saving && setIsModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsModalVisible(false)} disabled={saving} style={{ backgroundColor: 'transparent' }}>
+            Cancel
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => form.submit()} loading={saving} style={{ fontWeight: 600, color: '#000' }}>
+            Save Rule
+          </Button>,
+        ]}
+        width={700}
+      >
+        <Form form={form} layout="vertical" onFinish={handleModalSave} style={{ marginTop: '24px' }}>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="name" label="Fee Name" rules={[{ required: true, message: 'Please enter fee name' }]}>
+                <Input placeholder="e.g., Delivery Fee" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="value" label="Value" rules={[{ required: true, message: 'Please enter value' }]}>
+                <Input type="number" prefix={<DollarSign size={14} color="#888" />} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="type" label="Format">
+                <Select popupClassName="custom-select-dropdown">
+                  <Option value="fixed">Fixed Amount</Option>
+                  <Option value="percentage">Percentage (%)</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="action" label="Type">
+                <Select popupClassName="custom-select-dropdown">
+                  <Option value="add">Additional Charge (+)</Option>
+                  <Option value="subtract">Discount (-)</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="minSubtotal" label="Min. Order Amount (INR)">
+                <Input type="number" placeholder="e.g. 50000 (leave empty for no limit)" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="description" label="Description (Optional)">
+                <Input placeholder="Explain when this rule applies..." />
+              </Form.Item>
+            </Col>
+          </Row>
+        </Form>
+      </Modal>
     </div>
   );
 }

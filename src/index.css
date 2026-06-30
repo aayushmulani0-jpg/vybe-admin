@@ -9,10 +9,17 @@
   --font-sans: 'Inter', system-ui, sans-serif;
 }
 
+/* Hide scrollbars globally */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
 @layer base {
   body {
-    background-color: var(--color-vybe-dark);
-    color: white;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -34,21 +41,5 @@
 
   .neon-border {
     @apply border-vybe-neon shadow-[0_0_10px_rgba(163,255,18,0.3)];
-  }
-  
-  /* Custom Scrollbar for dark theme */
-  ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  ::-webkit-scrollbar-track {
-    background: #111111;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: #333333;
-    border-radius: 4px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: #A3FF12;
   }
 }

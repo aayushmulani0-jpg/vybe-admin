@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, Search } from 'lucide-react';
 import { API_URL } from '../config';
 import { useUIStore } from '../store/useUIStore';
+import { Table, Card, Input, Button, Typography, Row, Col, Select, Tag, Checkbox, Modal, Space, Empty } from 'antd';
+
+const { Title, Text } = Typography;
+const { TextArea } = Input;
+const { Option } = Select;
 
 export default function Collections() {
   const [collections, setCollections] = useState([]);
@@ -10,7 +15,7 @@ export default function Collections() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const initialForm = {
     name: '',
     description: '',
@@ -26,7 +31,7 @@ export default function Collections() {
     coverImage: '',
     products: []
   };
-  
+
   const [formData, setFormData] = useState(initialForm);
   const { alert, confirm } = useUIStore();
 
@@ -77,12 +82,11 @@ export default function Collections() {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     try {
       const url = editingId ? `${API_URL}/collections/${editingId}` : `${API_URL}/collections`;
       const method = editingId ? 'PUT' : 'POST';
-      
+
       const payload = { ...formData };
       if (!payload.startDate) delete payload.startDate;
       if (!payload.endDate) delete payload.endDate;
@@ -124,11 +128,10 @@ export default function Collections() {
     });
   };
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (name, value) => {
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
   };
 
@@ -167,212 +170,265 @@ export default function Collections() {
     }
   };
 
-  if (loading) return <div className="text-white p-6">Loading collections...</div>;
-
   const filteredCollections = collections.filter((col) => {
     return col.name?.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  const columns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text) => <Text strong >{text}</Text>},
+    {
+      title: 'Type',
+      dataIndex: 'type',
+      key: 'type'},
+    {
+      title: 'Products',
+      key: 'products',
+      render: (_, record) => `${record.products?.length || 0} items`},
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => (
+        <Tag color={record.isActive ? 'success' : 'error'}>
+          {record.isActive ? 'Active' : 'Inactive'}
+        </Tag>
+      )},
+    {
+      title: 'Actions',
+      key: 'actions',
+      align: 'right',
+      render: (_, record) => (
+        <Space size="small">
+          <Button 
+            type="text" 
+            icon={<Edit2 size={16} />} 
+            onClick={() => handleOpenModal(record)} 
+            style={{ color: '#a3ff12' }}
+          />
+          <Button 
+            type="text" 
+            danger 
+            icon={<Trash2 size={16} />} 
+            onClick={() => handleDelete(record._id)} 
+          />
+        </Space>
+      )},
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Collections & Drops</h1>
-          <p className="text-sm text-gray-400">Manage your product collections, drops, and campaigns.</p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyItems: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+        <div style={{ flex: 1 }}>
+          <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Collections & Drops</Title>
+          <Text type="secondary">Manage your product collections, drops, and campaigns.</Text>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative w-64">
-            <input
-              type="text"
-              placeholder="Search collections..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
-            />
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          </div>
-          <button 
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-vybe-neon text-black rounded-lg text-sm font-semibold hover:shadow-[0_0_20px_rgba(163,255,18,0.5)] transition-all"
-          >
-            <Plus className="w-4 h-4" /> New Collection
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Input 
+            prefix={<Search size={16}  />} 
+            placeholder="Search collections..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '256px'}}
+          />
+          <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()} style={{ fontWeight: 600, color: '#000' }}>
+            New Collection
+          </Button>
         </div>
       </div>
 
-      <div className="glass-panel overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-vybe-glassBorder bg-vybe-glass/30">
-              <th className="p-4 text-sm font-semibold text-gray-300">Name</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Type</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Products</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Status</th>
-              <th className="p-4 text-sm font-semibold text-gray-300 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredCollections.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="p-8 text-center text-gray-500">No collections found.</td>
-              </tr>
-            ) : (
-              filteredCollections.map(col => (
-                <tr key={col._id} className="border-b border-vybe-glassBorder hover:bg-vybe-glass/20 transition-colors">
-                  <td className="p-4 text-white font-medium">{col.name}</td>
-                  <td className="p-4 text-sm text-gray-300">{col.type}</td>
-                  <td className="p-4 text-sm text-gray-300">{col.products?.length || 0} items</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 text-xs rounded-full ${col.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                      {col.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="p-4 flex items-center justify-end gap-2">
-                    <button onClick={() => handleOpenModal(col)} className="p-2 bg-vybe-glass rounded-lg hover:text-vybe-neon transition-colors">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(col._id)} className="p-2 bg-vybe-glass rounded-lg hover:text-red-400 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-vybe-surface border border-vybe-glassBorder rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl relative">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white bg-vybe-glass rounded-full transition-colors z-10">
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold text-white p-6 border-b border-vybe-glassBorder">
-              {editingId ? 'Edit Collection' : 'Create Collection'}
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
-                <input required name="name" value={formData.name} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
+      <Card 
+        
+        bodyStyle={{ padding: 0 }}
+      >
+        <Table 
+          columns={columns} 
+          dataSource={filteredCollections} 
+          rowKey="_id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+          locale={{ 
+            emptyText: (
+              <div style={{ padding: '48px 0', textAlign: 'center' }}>
+                <Empty description="No Collections Found" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </div>
+            )
+          }}
+          scroll={{ x: 800 }}
+        />
+      </Card>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
-                <textarea name="description" value={formData.description} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none h-24" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
-                  <select name="type" value={formData.type} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none">
-                    <option>Regular Collection</option>
-                    <option>New Drop</option>
-                    <option>Limited Edition</option>
-                    <option>Seasonal Collection</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Display Order</label>
-                  <input type="number" name="displayOrder" value={formData.displayOrder} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Start Date (Optional)</label>
-                  <input type="datetime-local" name="startDate" value={formData.startDate} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">End Date (Optional)</label>
-                  <input type="datetime-local" name="endDate" value={formData.endDate} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Banner Image (URL or Upload)</label>
-                  <div className="flex gap-2">
-                    <input name="bannerImage" value={formData.bannerImage} onChange={handleChange} placeholder="https://..." className="flex-1 bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none min-w-0" />
-                    <label className="bg-vybe-glass border border-vybe-glassBorder hover:bg-vybe-glassBorder px-3 rounded-lg cursor-pointer flex items-center justify-center transition-colors">
-                      <ImageIcon className="w-4 h-4 text-gray-300" />
-                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'bannerImage')} />
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Cover Image (URL or Upload)</label>
-                  <div className="flex gap-2">
-                    <input name="coverImage" value={formData.coverImage} onChange={handleChange} placeholder="https://..." className="flex-1 bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none min-w-0" />
-                    <label className="bg-vybe-glass border border-vybe-glassBorder hover:bg-vybe-glassBorder px-3 rounded-lg cursor-pointer flex items-center justify-center transition-colors">
-                      <ImageIcon className="w-4 h-4 text-gray-300" />
-                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'coverImage')} />
-                    </label>
-                  </div>
-                </div>
-              </div>
+      <Modal
+        title={editingId ? 'Edit Collection' : 'Create Collection'}
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        width={700}
+        styles={{ 
+          body: { maxHeight: '80vh', overflowY: 'auto', paddingRight: '8px' },
+          content: { },
+          header: {  borderBottom: '1px solid #333' }}}
+        closeIcon={<X size={20} color="#888" />}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '16px' }}>
+          <div>
+            <Text style={{  display: 'block', marginBottom: '8px' }}>Name</Text>
+            <Input 
+              value={formData.name} 
+              onChange={(e) => handleChange('name', e.target.value)} 
               
-              {/* Product Selection */}
-              <div className="pt-2">
-                <label className="block text-sm font-medium text-gray-300 mb-2">Assign Products ({formData.products.length} selected)</label>
-                <div className="bg-vybe-glass border border-vybe-glassBorder rounded-lg p-3 max-h-48 overflow-y-auto custom-scrollbar">
-                  {allProducts.length === 0 ? (
-                    <p className="text-gray-500 text-sm">No products available.</p>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {allProducts.map(product => (
-                        <label key={product._id} className="flex items-center gap-3 p-2 hover:bg-vybe-glassBorder rounded-md cursor-pointer transition-colors">
-                          <input 
-                            type="checkbox" 
-                            checked={formData.products.includes(product._id)}
-                            onChange={() => handleProductToggle(product._id)}
-                            className="accent-vybe-neon w-4 h-4"
-                          />
-                          <div className="flex items-center gap-2 min-w-0">
-                            {product.images && product.images[0] && (
-                              <img src={product.images[0]} alt="" className="w-6 h-6 object-cover rounded shrink-0" />
-                            )}
-                            <span className="text-sm text-gray-300 truncate">{product.name}</span>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+            />
+          </div>
 
-              <div className="flex flex-wrap gap-6 pt-4 border-t border-vybe-glassBorder">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="accent-vybe-neon w-4 h-4" />
-                  <span className="text-sm text-gray-300">Active</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" name="isFeatured" checked={formData.isFeatured} onChange={handleChange} className="accent-vybe-neon w-4 h-4" />
-                  <span className="text-sm text-gray-300">Featured on Homepage</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" name="countdownTimer" checked={formData.countdownTimer} onChange={handleChange} className="accent-vybe-neon w-4 h-4" />
-                  <span className="text-sm text-gray-300">Show Countdown</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" name="preOrderEnabled" checked={formData.preOrderEnabled} onChange={handleChange} className="accent-vybe-neon w-4 h-4" />
-                  <span className="text-sm text-gray-300">Enable Pre-Orders</span>
-                </label>
-              </div>
+          <div>
+            <Text style={{  display: 'block', marginBottom: '8px' }}>Description</Text>
+            <TextArea 
+              value={formData.description} 
+              onChange={(e) => handleChange('description', e.target.value)} 
+              rows={4}
+              
+            />
+          </div>
 
-              <div className="flex justify-end gap-3 pt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-vybe-glass text-white rounded-lg hover:bg-vybe-glassBorder transition-colors">
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 bg-vybe-neon text-black font-semibold rounded-lg hover:shadow-[0_0_15px_rgba(163,255,18,0.4)] transition-all">
-                  {editingId ? 'Update Collection' : 'Create Collection'}
-                </button>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Type</Text>
+              <Select 
+                value={formData.type} 
+                onChange={(value) => handleChange('type', value)}
+                style={{ width: '100%' }}
+                popupClassName="custom-select-dropdown"
+              >
+                <Option value="Regular Collection">Regular Collection</Option>
+                <Option value="New Drop">New Drop</Option>
+                <Option value="Limited Edition">Limited Edition</Option>
+                <Option value="Seasonal Collection">Seasonal Collection</Option>
+              </Select>
+            </Col>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Display Order</Text>
+              <Input 
+                type="number"
+                value={formData.displayOrder} 
+                onChange={(e) => handleChange('displayOrder', Number(e.target.value))} 
+                
+              />
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Start Date (Optional)</Text>
+              <Input 
+                type="datetime-local"
+                value={formData.startDate} 
+                onChange={(e) => handleChange('startDate', e.target.value)} 
+                
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>End Date (Optional)</Text>
+              <Input 
+                type="datetime-local"
+                value={formData.endDate} 
+                onChange={(e) => handleChange('endDate', e.target.value)} 
+                
+              />
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Banner Image</Text>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Input 
+                  value={formData.bannerImage} 
+                  onChange={(e) => handleChange('bannerImage', e.target.value)} 
+                  placeholder="https://..."
+                  
+                />
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', backgroundColor: '#333', borderRadius: '8px', cursor: 'pointer' }}>
+                  <ImageIcon size={16} color="#fff" />
+                  <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'bannerImage')} />
+                </label>
               </div>
-            </form>
+            </Col>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Cover Image</Text>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Input 
+                  value={formData.coverImage} 
+                  onChange={(e) => handleChange('coverImage', e.target.value)} 
+                  placeholder="https://..."
+                  
+                />
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', backgroundColor: '#333', borderRadius: '8px', cursor: 'pointer' }}>
+                  <ImageIcon size={16} color="#fff" />
+                  <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'coverImage')} />
+                </label>
+              </div>
+            </Col>
+          </Row>
+
+          <div>
+            <Text style={{  display: 'block', marginBottom: '8px' }}>Assign Products ({formData.products.length} selected)</Text>
+            <div style={{  border: '1px solid #333', borderRadius: '8px', padding: '12px', maxHeight: '200px', overflowY: 'auto' }}>
+              {allProducts.length === 0 ? (
+                <Text type="secondary">No products available.</Text>
+              ) : (
+                <Row gutter={[8, 8]}>
+                  {allProducts.map(product => (
+                    <Col xs={24} sm={12} key={product._id}>
+                      <div 
+                        style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px',  borderRadius: '4px', border: '1px solid #333', cursor: 'pointer' }}
+                        onClick={() => handleProductToggle(product._id)}
+                      >
+                        <Checkbox 
+                          checked={formData.products.includes(product._id)}
+                          style={{ margin: 0 }}
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                          {product.images && product.images[0] && (
+                            <img src={product.images[0]} alt="" style={{ width: '24px', height: '24px', objectFit: 'cover', borderRadius: '4px' }} />
+                          )}
+                          <Text style={{  fontSize: '12px', whiteSpace: 'nowrap', textOverflow: 'ellipsis', overflow: 'hidden' }}>{product.name}</Text>
+                        </div>
+                      </div>
+                    </Col>
+                  ))}
+                </Row>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', paddingTop: '16px', borderTop: '1px solid #333' }}>
+            <Checkbox checked={formData.isActive} onChange={(e) => handleChange('isActive', e.target.checked)}>
+              <Text >Active</Text>
+            </Checkbox>
+            <Checkbox checked={formData.isFeatured} onChange={(e) => handleChange('isFeatured', e.target.checked)}>
+              <Text >Featured on Homepage</Text>
+            </Checkbox>
+            <Checkbox checked={formData.countdownTimer} onChange={(e) => handleChange('countdownTimer', e.target.checked)}>
+              <Text >Show Countdown</Text>
+            </Checkbox>
+            <Checkbox checked={formData.preOrderEnabled} onChange={(e) => handleChange('preOrderEnabled', e.target.checked)}>
+              <Text >Enable Pre-Orders</Text>
+            </Checkbox>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+            <Button onClick={() => setIsModalOpen(false)} style={{ backgroundColor: 'transparent'}}>
+              Cancel
+            </Button>
+            <Button type="primary" onClick={handleSubmit} style={{ fontWeight: 600, color: '#000' }}>
+              {editingId ? 'Update Collection' : 'Create Collection'}
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
+
     </div>
   );
 }

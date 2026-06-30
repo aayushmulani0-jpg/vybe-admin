@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { usePrintSettingsStore } from '../../store/usePrintSettingsStore';
-import GlassCard from '../common/GlassCard';
-import Button from '../common/Button';
-import { X, Save, MapPin, Layers } from 'lucide-react';
+import { Save, MapPin, Layers } from 'lucide-react';
+import { Table, Button, Typography, Input, Checkbox, Tabs, Modal, Spin } from 'antd';
+
+const { Title, Text } = Typography;
 
 export default function WholesalePrintSettingsModal({ catalogue, onSave, onClose }) {
   const { printLocations, fetchPrintLocations } = usePrintSettingsStore();
@@ -81,139 +82,179 @@ export default function WholesalePrintSettingsModal({ catalogue, onSave, onClose
     setLocalTemplates(prev => prev.map(tpl => tpl.templateId === templateId ? { ...tpl, ...updates } : tpl));
   };
 
+  const areasColumns = [
+    {
+      title: 'Zone Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text, record) => <Text strong style={{ color: record.isActive ? '#fff' : 'rgba(255,255,255,0.5)' }}>{text}</Text>},
+    {
+      title: 'Global Retail Price',
+      key: 'retailPrice',
+      render: (_, record) => {
+        const globalLoc = printLocations.find(gl => gl._id === record.locationId);
+        return <Text style={{ color: record.isActive ? '#888' : 'rgba(136,136,136,0.5)' }}>₹{globalLoc?.cost || 0}</Text>;
+      }},
+    {
+      title: 'Wholesale Price (₹)',
+      key: 'wholesaleCost',
+      render: (_, record) => (
+        <Input 
+          type="number"
+          value={record.wholesaleCost}
+          onChange={(e) => handleUpdateLocation(record.locationId, { wholesaleCost: Number(e.target.value) })}
+          disabled={!record.isActive}
+          style={{ width: '100px'}}
+        />
+      )},
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => (
+        <Checkbox 
+          checked={record.isActive}
+          onChange={(e) => handleUpdateLocation(record.locationId, { isActive: e.target.checked })}
+        >
+          <Text >{record.isActive ? 'Enabled' : 'Disabled'}</Text>
+        </Checkbox>
+      )},
+  ];
+
+  const templatesColumns = [
+    {
+      title: 'Template Name',
+      key: 'name',
+      render: (_, record) => {
+        const globalTpl = globalTemplates.find(gt => gt._id === record.templateId);
+        return (
+          <div>
+            <Text strong style={{ color: record.isActive ? '#fff' : 'rgba(255,255,255,0.5)', display: 'block' }}>{record.name}</Text>
+            {globalTpl?.printAreas && (
+              <Text style={{ fontSize: '10px', color: record.isActive ? '#888' : 'rgba(136,136,136,0.5)' }}>
+                {globalTpl.printAreas.map(pa => pa.name).join(', ')}
+              </Text>
+            )}
+          </div>
+        );
+      }},
+    {
+      title: 'Global Retail Price',
+      key: 'retailPrice',
+      render: (_, record) => {
+        const globalTpl = globalTemplates.find(gt => gt._id === record.templateId);
+        return <Text style={{ color: record.isActive ? '#888' : 'rgba(136,136,136,0.5)' }}>₹{globalTpl?.price || 0}</Text>;
+      }},
+    {
+      title: 'Wholesale Price (₹)',
+      key: 'wholesalePrice',
+      render: (_, record) => (
+        <Input 
+          type="number"
+          value={record.wholesalePrice}
+          onChange={(e) => handleUpdateTemplate(record.templateId, { wholesalePrice: Number(e.target.value) })}
+          disabled={!record.isActive}
+          style={{ width: '100px'}}
+        />
+      )},
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => (
+        <Checkbox 
+          checked={record.isActive}
+          onChange={(e) => handleUpdateTemplate(record.templateId, { isActive: e.target.checked })}
+        >
+          <Text >{record.isActive ? 'Enabled' : 'Disabled'}</Text>
+        </Checkbox>
+      )},
+  ];
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto custom-scrollbar">
-      <div className="w-full max-w-4xl relative">
-        <button onClick={onClose} className="absolute -top-12 right-0 text-gray-400 hover:text-white transition-colors z-10">
-          <X className="w-8 h-8" />
-        </button>
-        <GlassCard className="p-6 h-[85vh] flex flex-col">
-          <div className="flex items-center justify-between mb-6 shrink-0 border-b border-vybe-glassBorder pb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Wholesale Print Management</h2>
-              <p className="text-sm text-gray-400">Set wholesale-specific pricing for global print areas and templates.</p>
-            </div>
-            <div className="flex bg-vybe-dark p-1 rounded-lg border border-vybe-glassBorder">
-              <button 
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'areas' ? 'bg-vybe-glass border border-vybe-glassBorder text-white' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('areas')}
-              >
-                Print Areas
-              </button>
-              <button 
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'templates' ? 'bg-vybe-glass border border-vybe-glassBorder text-white' : 'text-gray-400 hover:text-white'}`}
-                onClick={() => setActiveTab('templates')}
-              >
-                Templates
-              </button>
-            </div>
-          </div>
+    <Modal
+      open={true}
+      onCancel={onClose}
+      footer={[
+        <Button key="cancel" onClick={onClose} style={{ backgroundColor: 'transparent'}}>
+          Cancel
+        </Button>,
+        <Button key="submit" type="primary" onClick={handleSave} icon={<Save size={16} />} style={{ fontWeight: 600, color: '#000' }}>
+          Save Settings to Catalogue
+        </Button>,
+      ]}
+      width={900}
+      title={
+        <div>
+          <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Wholesale Print Management</Title>
+          <Text type="secondary" style={{ fontSize: '14px', fontWeight: 'normal' }}>Set wholesale-specific pricing for global print areas and templates.</Text>
+        </div>
+      }
+      styles={{ 
+        body: { maxHeight: '70vh', overflowY: 'auto' },
+        content: { },
+        header: {  borderBottom: '1px solid #333', paddingBottom: '16px', marginBottom: '16px' }}}
+    >
+      <Tabs 
+        activeKey={activeTab} 
+        onChange={setActiveTab}
+        items={[
+          {
+            key: 'areas',
+            label: (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <MapPin size={16} /> Print Areas
+              </span>
+            ),
+            children: (
+              <Table 
+                columns={areasColumns} 
+                dataSource={localLocations} 
+                rowKey="locationId"
+                pagination={false}
+                style={{ marginTop: '16px' }}
+                rowClassName={(record) => !record.isActive ? 'disabled-row' : ''}
+              />
+            )},
+          {
+            key: 'templates',
+            label: (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Layers size={16} /> Templates
+              </span>
+            ),
+            children: isLoadingTemplates ? (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '48px 0' }}>
+                <Spin />
+              </div>
+            ) : (
+              <Table 
+                columns={templatesColumns} 
+                dataSource={localTemplates} 
+                rowKey="templateId"
+                pagination={false}
+                style={{ marginTop: '16px' }}
+                rowClassName={(record) => !record.isActive ? 'disabled-row' : ''}
+              />
+            )},
+        ]}
+      />
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar mb-6 pr-2">
-            {activeTab === 'areas' && (
-              <table className="w-full text-left text-sm text-gray-300">
-                <thead className="bg-vybe-dark text-xs uppercase text-gray-400 border-b border-vybe-glassBorder">
-                  <tr>
-                    <th className="px-6 py-4">Zone Name</th>
-                    <th className="px-6 py-4">Global Retail Price</th>
-                    <th className="px-6 py-4">Wholesale Price (₹)</th>
-                    <th className="px-6 py-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {localLocations.map(loc => {
-                    const globalLoc = printLocations.find(gl => gl._id === loc.locationId);
-                    return (
-                      <tr key={loc.locationId} className={`border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors ${!loc.isActive ? 'opacity-50' : ''}`}>
-                        <td className="px-6 py-4 font-medium text-white">{loc.name}</td>
-                        <td className="px-6 py-4 text-gray-500">₹{globalLoc?.cost || 0}</td>
-                        <td className="px-6 py-4">
-                          <input 
-                            type="number"
-                            value={loc.wholesaleCost}
-                            onChange={(e) => handleUpdateLocation(loc.locationId, { wholesaleCost: Number(e.target.value) })}
-                            disabled={!loc.isActive}
-                            className="bg-vybe-dark border border-vybe-glassBorder rounded px-2 py-1 w-24 text-white focus:border-vybe-neon focus:outline-none disabled:opacity-50"
-                          />
-                        </td>
-                        <td className="px-6 py-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={loc.isActive}
-                              onChange={(e) => handleUpdateLocation(loc.locationId, { isActive: e.target.checked })}
-                              className="w-4 h-4 accent-vybe-neon"
-                            />
-                            <span>{loc.isActive ? 'Enabled' : 'Disabled'}</span>
-                          </label>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-
-            {activeTab === 'templates' && (
-              <table className="w-full text-left text-sm text-gray-300">
-                <thead className="bg-vybe-dark text-xs uppercase text-gray-400 border-b border-vybe-glassBorder">
-                  <tr>
-                    <th className="px-6 py-4">Template Name</th>
-                    <th className="px-6 py-4">Global Retail Price</th>
-                    <th className="px-6 py-4">Wholesale Price (₹)</th>
-                    <th className="px-6 py-4">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoadingTemplates ? (
-                     <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-500">Loading templates...</td></tr>
-                  ) : localTemplates.length === 0 ? (
-                    <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-500">No global templates found.</td></tr>
-                  ) : localTemplates.map(tpl => {
-                    const globalTpl = globalTemplates.find(gt => gt._id === tpl.templateId);
-                    return (
-                      <tr key={tpl.templateId} className={`border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors ${!tpl.isActive ? 'opacity-50' : ''}`}>
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-white">{tpl.name}</p>
-                          {globalTpl?.printAreas && (
-                            <p className="text-[10px] text-gray-500 mt-1">{globalTpl.printAreas.map(pa => pa.name).join(', ')}</p>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-gray-500">₹{globalTpl?.price || 0}</td>
-                        <td className="px-6 py-4">
-                          <input 
-                            type="number"
-                            value={tpl.wholesalePrice}
-                            onChange={(e) => handleUpdateTemplate(tpl.templateId, { wholesalePrice: Number(e.target.value) })}
-                            disabled={!tpl.isActive}
-                            className="bg-vybe-dark border border-vybe-glassBorder rounded px-2 py-1 w-24 text-white focus:border-vybe-neon focus:outline-none disabled:opacity-50"
-                          />
-                        </td>
-                        <td className="px-6 py-4">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={tpl.isActive}
-                              onChange={(e) => handleUpdateTemplate(tpl.templateId, { isActive: e.target.checked })}
-                              className="w-4 h-4 accent-vybe-neon"
-                            />
-                            <span>{tpl.isActive ? 'Enabled' : 'Disabled'}</span>
-                          </label>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            )}
-          </div>
-
-          <div className="shrink-0 pt-4 border-t border-vybe-glassBorder flex justify-end gap-3">
-            <Button variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button variant="primary" onClick={handleSave}><Save className="w-4 h-4 mr-2" /> Save Settings to Catalogue</Button>
-          </div>
-        </GlassCard>
-      </div>
-    </div>
+      <style>{`
+        .disabled-row {
+          opacity: 0.5;
+        }
+        .ant-tabs-nav::before {
+          border-bottom: 1px solid #333 !important;
+        }
+        .ant-tabs-tab {
+          color: #888 !important;
+        }
+        .ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: #a3ff12 !important;
+        }
+        .ant-tabs-ink-bar {
+          background: #a3ff12 !important;
+        }
+      `}</style>
+    </Modal>
   );
 }

@@ -1,9 +1,10 @@
 import { Outlet } from 'react-router-dom';
+import { Layout as AntLayout, Modal } from 'antd';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import ConfirmModal from '../common/ConfirmModal';
-import AlertModal from '../common/AlertModal';
 import { useUIStore } from '../../store/useUIStore';
+
+const { Content } = AntLayout;
 
 export default function Layout() {
   const { 
@@ -12,25 +13,58 @@ export default function Layout() {
   } = useUIStore();
 
   return (
-    <div className="min-h-screen bg-vybe-dark text-white flex">
+    <AntLayout style={{ minHeight: '100vh' }}>
       <Sidebar />
-      <div className="flex-1 lg:ml-64 flex flex-col min-h-screen">
+      <AntLayout style={{ marginLeft: 256 }}>
         <Header />
-        <main className="flex-1 p-8 overflow-x-hidden">
-          {/* Framer motion could be added here for page transitions later */}
+        <Content style={{ padding: '24px 32px', overflow: 'initial', minHeight: 'calc(100vh - 64px)' }}>
           <Outlet />
-        </main>
-      </div>
+        </Content>
+      </AntLayout>
       
-      <ConfirmModal 
-        confirmModal={confirmModal}
-        onClose={closeConfirm}
-      />
+      {/* Confirm Modal */}
+      <Modal
+        open={!!confirmModal}
+        onCancel={() => {
+          if (confirmModal?.onCancel) confirmModal.onCancel();
+          closeConfirm();
+        }}
+        onOk={() => {
+          if (confirmModal?.onConfirm) confirmModal.onConfirm();
+          closeConfirm();
+        }}
+        okText={confirmModal?.confirmText || 'Confirm'}
+        cancelText={confirmModal?.cancelText || 'Cancel'}
+        title={confirmModal?.title || 'Confirm'}
+        centered
+        styles={{
+          content: {  border: '1px solid #333' },
+          header: { },
+          title: { }
+        }}
+        okButtonProps={{ type: 'primary', danger: confirmModal?.confirmText?.toLowerCase() === 'delete', style: confirmModal?.confirmText?.toLowerCase() !== 'delete' ? { color: '#000', fontWeight: 600 } : {} }}
+        cancelButtonProps={{ style: { backgroundColor: 'transparent'} }}
+      >
+        <p style={{ color: '#ccc', margin: '16px 0' }}>{confirmModal?.message}</p>
+      </Modal>
       
-      <AlertModal 
-        alertModal={alertModal}
-        onClose={closeAlert}
-      />
-    </div>
+      {/* Alert Modal */}
+      <Modal
+        open={!!alertModal}
+        onCancel={closeAlert}
+        onOk={closeAlert}
+        title={alertModal?.title || (alertModal?.type === 'error' ? 'Error' : alertModal?.type === 'success' ? 'Success' : 'Information')}
+        centered
+        styles={{
+          content: {  border: '1px solid #333' },
+          header: { },
+          title: { }
+        }}
+        okButtonProps={{ type: 'primary', style: { color: '#000', fontWeight: 600 } }}
+        cancelButtonProps={{ style: { display: 'none' } }}
+      >
+        <p style={{ color: '#ccc', margin: '16px 0' }}>{alertModal?.message}</p>
+      </Modal>
+    </AntLayout>
   );
 }

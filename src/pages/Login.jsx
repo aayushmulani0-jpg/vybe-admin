@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuthStore } from '../store/useAdminAuthStore';
-import Button from '../components/common/Button';
+import { Input, Button, Alert, Card, Typography } from 'antd';
 import { Lock, Mail } from 'lucide-react';
+
+const { Title, Text } = Typography;
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -27,54 +29,57 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-vybe-dark flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md bg-neutral-900 rounded-xl shadow-2xl p-8 border border-vybe-glassBorder">
+      <Card 
+        style={{ width: '100%', maxWidth: 400}}
+        bodyStyle={{ padding: '32px' }}
+      >
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">VYBE <span className="text-vybe-neon">ADMIN</span></h1>
-          <p className="text-gray-400 text-sm">Sign in to access the dashboard</p>
+          <Title level={2} style={{  marginBottom: 8, margin: 0 }}>
+            VYBE <span style={{ color: '#a3ff12' }}>ADMIN</span>
+          </Title>
+          <Text type="secondary">Sign in to access the dashboard</Text>
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-3 rounded-md text-sm mb-6 text-center">
-            {error}
-          </div>
+          <Alert message={error} type="error" showIcon style={{ marginBottom: 24 }} />
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="w-5 h-5 text-gray-500" />
-              </div>
-              <input 
-                type="email" 
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-md bg-black text-white placeholder-gray-500 focus:outline-none focus:border-vybe-neon transition-colors"
-                placeholder="admin@vybe.com"
-              />
-            </div>
+            <Input 
+              size="large"
+              prefix={<Mail className="w-5 h-5 text-gray-500" />}
+              type="email" 
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@vybe.com"
+              
+            />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="w-5 h-5 text-gray-500" />
-              </div>
-              <input 
-                type="password" 
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full pl-10 pr-3 py-3 border border-white/10 rounded-md bg-black text-white placeholder-gray-500 focus:outline-none focus:border-vybe-neon transition-colors"
-                placeholder="••••••••"
-              />
-            </div>
+            <Input.Password 
+              size="large"
+              prefix={<Lock className="w-5 h-5 text-gray-500" />}
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              
+            />
           </div>
 
-          <Button type="submit" variant="primary" className="w-full py-3 mt-4" disabled={loading}>
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            block 
+            size="large" 
+            loading={loading}
+            style={{ marginTop: 16, height: 48, fontWeight: 500, color: '#000' }}
+          >
             {loading ? 'Authenticating...' : 'Secure Login'}
           </Button>
         </form>
@@ -82,12 +87,12 @@ export default function Login() {
         {hasAdmin === false && (
           <div className="mt-8 text-center pt-6 border-t border-white/5">
             <p className="text-sm text-gray-400 mb-3">No admin account found in the system.</p>
-            <Button variant="secondary" size="sm" onClick={() => navigate('/register')}>
+            <Button size="small" onClick={() => navigate('/register')} >
               Create First Admin
             </Button>
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

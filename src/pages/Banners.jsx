@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, X, Image as ImageIcon, Search } from 'lucide-react';
 import { API_URL } from '../config';
 import { useUIStore } from '../store/useUIStore';
+import { Table, Card, Input, Button, Typography, Row, Col, Select, Tag, Checkbox, Modal, Space, Empty } from 'antd';
+
+const { Title, Text } = Typography;
+const { Option } = Select;
 
 export default function Banners() {
   const [banners, setBanners] = useState([]);
@@ -65,8 +69,7 @@ export default function Banners() {
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     try {
       const url = editingId ? `${API_URL}/banners/${editingId}` : `${API_URL}/banners`;
       const method = editingId ? 'PUT' : 'POST';
@@ -112,21 +115,20 @@ export default function Banners() {
     });
   };
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (name, value) => {
     if (name.startsWith('autoPlaySettings.')) {
       const key = name.split('.')[1];
       setFormData(prev => ({
         ...prev,
         autoPlaySettings: {
           ...prev.autoPlaySettings,
-          [key]: type === 'checkbox' ? checked : value
+          [key]: value
         }
       }));
     } else {
       setFormData(prev => ({
         ...prev,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: value
       }));
     }
   };
@@ -155,189 +157,250 @@ export default function Banners() {
     }
   };
 
-  if (loading) return <div className="text-white p-6">Loading banners...</div>;
-
   const filteredBanners = banners.filter((banner) => {
     return banner.title?.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
+  const columns = [
+    {
+      title: 'Title',
+      dataIndex: 'title',
+      key: 'title',
+      render: (text) => <Text strong >{text}</Text>},
+    {
+      title: 'Type',
+      dataIndex: 'type',
+      key: 'type'},
+    {
+      title: 'Priority',
+      dataIndex: 'displayPriority',
+      key: 'displayPriority'},
+    {
+      title: 'Status',
+      key: 'status',
+      render: (_, record) => (
+        <Tag color={record.isActive ? 'success' : 'error'}>
+          {record.isActive ? 'Active' : 'Inactive'}
+        </Tag>
+      )},
+    {
+      title: 'Actions',
+      key: 'actions',
+      align: 'right',
+      render: (_, record) => (
+        <Space size="small">
+          <Button 
+            type="text" 
+            icon={<Edit2 size={16} />} 
+            onClick={() => handleOpenModal(record)} 
+            style={{ color: '#a3ff12' }}
+          />
+          <Button 
+            type="text" 
+            danger 
+            icon={<Trash2 size={16} />} 
+            onClick={() => handleDelete(record._id)} 
+          />
+        </Space>
+      )},
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Marketing Banners</h1>
-          <p className="text-sm text-gray-400">Manage homepage hero banners and promotional carousels.</p>
+          <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Marketing Banners</Title>
+          <Text type="secondary">Manage homepage hero banners and promotional carousels.</Text>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative w-64">
-            <input
-              type="text"
-              placeholder="Search banners..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
-            />
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          </div>
-          <button 
-            onClick={() => handleOpenModal()}
-            className="flex items-center gap-2 px-4 py-2 bg-vybe-neon text-black rounded-lg text-sm font-semibold hover:shadow-[0_0_20px_rgba(163,255,18,0.5)] transition-all"
-          >
-            <Plus className="w-4 h-4" /> New Banner
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Input 
+            prefix={<Search size={16}  />} 
+            placeholder="Search banners..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '256px'}}
+          />
+          <Button type="primary" icon={<Plus size={16} />} onClick={() => handleOpenModal()} style={{ fontWeight: 600, color: '#000' }}>
+            New Banner
+          </Button>
         </div>
       </div>
 
-      <div className="glass-panel overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="border-b border-vybe-glassBorder bg-vybe-glass/30">
-              <th className="p-4 text-sm font-semibold text-gray-300">Title</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Type</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Priority</th>
-              <th className="p-4 text-sm font-semibold text-gray-300">Status</th>
-              <th className="p-4 text-sm font-semibold text-gray-300 text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredBanners.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="p-8 text-center text-gray-500">No banners found.</td>
-              </tr>
-            ) : (
-              filteredBanners.map(banner => (
-                <tr key={banner._id} className="border-b border-vybe-glassBorder hover:bg-vybe-glass/20 transition-colors">
-                  <td className="p-4 text-white font-medium">{banner.title}</td>
-                  <td className="p-4 text-sm text-gray-300">{banner.type}</td>
-                  <td className="p-4 text-sm text-gray-300">{banner.displayPriority}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 text-xs rounded-full ${banner.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
-                      {banner.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="p-4 flex items-center justify-end gap-2">
-                    <button onClick={() => handleOpenModal(banner)} className="p-2 bg-vybe-glass rounded-lg hover:text-vybe-neon transition-colors">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button onClick={() => handleDelete(banner._id)} className="p-2 bg-vybe-glass rounded-lg hover:text-red-400 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="bg-vybe-surface border border-vybe-glassBorder rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl relative">
-            <button onClick={() => setIsModalOpen(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white bg-vybe-glass rounded-full transition-colors">
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold text-white p-6 border-b border-vybe-glassBorder">
-              {editingId ? 'Edit Banner' : 'Create Banner'}
-            </h2>
-            
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Title</label>
-                  <input required name="title" value={formData.title} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Subtitle</label>
-                  <input name="subtitle" value={formData.subtitle} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
+      <Card 
+        
+        bodyStyle={{ padding: 0 }}
+      >
+        <Table 
+          columns={columns} 
+          dataSource={filteredBanners} 
+          rowKey="_id"
+          loading={loading}
+          pagination={{ pageSize: 10 }}
+          locale={{ 
+            emptyText: (
+              <div style={{ padding: '48px 0', textAlign: 'center' }}>
+                <Empty description="No Banners Found" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </div>
+            )
+          }}
+          scroll={{ x: 800 }}
+        />
+      </Card>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Type</label>
-                  <select name="type" value={formData.type} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none">
-                    <option>Discount Banner</option>
-                    <option>New Collection Banner</option>
-                    <option>New Drop Banner</option>
-                    <option>Marketing Campaign</option>
-                    <option>Festival Sale</option>
-                    <option>Announcement Banner</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Priority (Higher = first)</label>
-                  <input type="number" name="displayPriority" value={formData.displayPriority} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-              </div>
+      <Modal
+        title={editingId ? 'Edit Banner' : 'Create Banner'}
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}
+        width={700}
+        styles={{ 
+          body: { maxHeight: '80vh', overflowY: 'auto', paddingRight: '8px' },
+          content: { },
+          header: {  borderBottom: '1px solid #333' }}}
+        closeIcon={<X size={20} color="#888" />}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '16px' }}>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Title</Text>
+              <Input 
+                value={formData.title} 
+                onChange={(e) => handleChange('title', e.target.value)} 
+                
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Subtitle</Text>
+              <Input 
+                value={formData.subtitle} 
+                onChange={(e) => handleChange('subtitle', e.target.value)} 
+                
+              />
+            </Col>
+          </Row>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">CTA Text</label>
-                  <input name="ctaText" value={formData.ctaText} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">CTA URL</label>
-                  <input name="ctaUrl" value={formData.ctaUrl} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-              </div>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Type</Text>
+              <Select 
+                value={formData.type} 
+                onChange={(value) => handleChange('type', value)}
+                style={{ width: '100%' }}
+                popupClassName="custom-select-dropdown"
+              >
+                <Option value="Discount Banner">Discount Banner</Option>
+                <Option value="New Collection Banner">New Collection Banner</Option>
+                <Option value="New Drop Banner">New Drop Banner</Option>
+                <Option value="Marketing Campaign">Marketing Campaign</Option>
+                <Option value="Festival Sale">Festival Sale</Option>
+                <Option value="Announcement Banner">Announcement Banner</Option>
+              </Select>
+            </Col>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Priority (Higher = first)</Text>
+              <Input 
+                type="number"
+                value={formData.displayPriority} 
+                onChange={(e) => handleChange('displayPriority', Number(e.target.value))} 
+                
+              />
+            </Col>
+          </Row>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Desktop Image (URL or Upload)</label>
-                  <div className="flex gap-2">
-                    <input name="desktopImage" value={formData.desktopImage} onChange={handleChange} placeholder="https://..." className="flex-1 bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none min-w-0" />
-                    <label className="bg-vybe-glass border border-vybe-glassBorder hover:bg-vybe-glassBorder px-3 rounded-lg cursor-pointer flex items-center justify-center transition-colors">
-                      <ImageIcon className="w-4 h-4 text-gray-300" />
-                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'desktopImage')} />
-                    </label>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Mobile Image (URL or Upload)</label>
-                  <div className="flex gap-2">
-                    <input name="mobileImage" value={formData.mobileImage} onChange={handleChange} placeholder="https://..." className="flex-1 bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none min-w-0" />
-                    <label className="bg-vybe-glass border border-vybe-glassBorder hover:bg-vybe-glassBorder px-3 rounded-lg cursor-pointer flex items-center justify-center transition-colors">
-                      <ImageIcon className="w-4 h-4 text-gray-300" />
-                      <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'mobileImage')} />
-                    </label>
-                  </div>
-                </div>
-              </div>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>CTA Text</Text>
+              <Input 
+                value={formData.ctaText} 
+                onChange={(e) => handleChange('ctaText', e.target.value)} 
+                
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>CTA URL</Text>
+              <Input 
+                value={formData.ctaUrl} 
+                onChange={(e) => handleChange('ctaUrl', e.target.value)} 
+                
+              />
+            </Col>
+          </Row>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Start Date (Optional)</label>
-                  <input type="datetime-local" name="startDate" value={formData.startDate} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">End Date (Optional)</label>
-                  <input type="datetime-local" name="endDate" value={formData.endDate} onChange={handleChange} className="w-full bg-vybe-glass border border-vybe-glassBorder rounded-lg p-2.5 text-white focus:border-vybe-neon outline-none" />
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-6 pt-4 border-t border-vybe-glassBorder">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" name="isActive" checked={formData.isActive} onChange={handleChange} className="accent-vybe-neon w-4 h-4" />
-                  <span className="text-sm text-gray-300">Active</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" name="autoPlaySettings.enabled" checked={formData.autoPlaySettings?.enabled} onChange={handleChange} className="accent-vybe-neon w-4 h-4" />
-                  <span className="text-sm text-gray-300">AutoPlay</span>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Desktop Image</Text>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Input 
+                  value={formData.desktopImage} 
+                  onChange={(e) => handleChange('desktopImage', e.target.value)} 
+                  placeholder="https://..."
+                  
+                />
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', backgroundColor: '#333', borderRadius: '8px', cursor: 'pointer' }}>
+                  <ImageIcon size={16} color="#fff" />
+                  <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'desktopImage')} />
                 </label>
               </div>
-
-              <div className="flex justify-end gap-3 pt-6">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-vybe-glass text-white rounded-lg hover:bg-vybe-glassBorder transition-colors">
-                  Cancel
-                </button>
-                <button type="submit" className="px-4 py-2 bg-vybe-neon text-black font-semibold rounded-lg hover:shadow-[0_0_15px_rgba(163,255,18,0.4)] transition-all">
-                  {editingId ? 'Update Banner' : 'Create Banner'}
-                </button>
+            </Col>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Mobile Image</Text>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Input 
+                  value={formData.mobileImage} 
+                  onChange={(e) => handleChange('mobileImage', e.target.value)} 
+                  placeholder="https://..."
+                  
+                />
+                <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px', backgroundColor: '#333', borderRadius: '8px', cursor: 'pointer' }}>
+                  <ImageIcon size={16} color="#fff" />
+                  <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleFileUpload(e, 'mobileImage')} />
+                </label>
               </div>
-            </form>
+            </Col>
+          </Row>
+
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>Start Date (Optional)</Text>
+              <Input 
+                type="datetime-local"
+                value={formData.startDate} 
+                onChange={(e) => handleChange('startDate', e.target.value)} 
+                
+              />
+            </Col>
+            <Col xs={24} md={12}>
+              <Text style={{  display: 'block', marginBottom: '8px' }}>End Date (Optional)</Text>
+              <Input 
+                type="datetime-local"
+                value={formData.endDate} 
+                onChange={(e) => handleChange('endDate', e.target.value)} 
+                
+              />
+            </Col>
+          </Row>
+
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', paddingTop: '16px', borderTop: '1px solid #333' }}>
+            <Checkbox checked={formData.isActive} onChange={(e) => handleChange('isActive', e.target.checked)}>
+              <Text >Active</Text>
+            </Checkbox>
+            <Checkbox checked={formData.autoPlaySettings?.enabled} onChange={(e) => handleChange('autoPlaySettings.enabled', e.target.checked)}>
+              <Text >AutoPlay</Text>
+            </Checkbox>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+            <Button onClick={() => setIsModalOpen(false)} style={{ backgroundColor: 'transparent'}}>
+              Cancel
+            </Button>
+            <Button type="primary" onClick={handleSubmit} style={{ fontWeight: 600, color: '#000' }}>
+              {editingId ? 'Update Banner' : 'Create Banner'}
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
+
+      
     </div>
   );
 }

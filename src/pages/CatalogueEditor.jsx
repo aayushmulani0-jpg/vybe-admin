@@ -1,14 +1,56 @@
 import { useState, useEffect } from 'react';
 import { useCatalogueStore } from '../store/useCatalogueStore';
 import { useProductStore } from '../store/useProductStore';
-import GlassCard from '../components/common/GlassCard';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
 import { BookOpen, Trash2, Plus, CheckCircle, Globe, X, ArrowLeft, Settings2, Settings, Search } from 'lucide-react';
 import WholesalePrintSettingsModal from '../components/catalogue/WholesalePrintSettingsModal';
+import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal, Badge } from 'antd';
+
+const { Title, Text } = Typography;
+
+const EditableWholesalePriceInput = ({ selectedCatId, item, updateCatalogueItem }) => {
+  const [val, setVal] = useState(item.wholesalePrice || '');
+  useEffect(() => setVal(item.wholesalePrice || ''), [item.wholesalePrice]);
+  const handleBlur = () => {
+    const newPrice = Number(val);
+    if (newPrice !== item.wholesalePrice) {
+      updateCatalogueItem(selectedCatId, item.productId, { wholesalePrice: newPrice });
+    }
+  };
+  return (
+    <Input 
+      type="number" 
+      value={val} 
+      onChange={(e) => setVal(e.target.value)} 
+      onBlur={handleBlur} 
+      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()} 
+      style={{ width: '100px' }} 
+    />
+  );
+};
+
+const EditableMoqInput = ({ selectedCatId, item, updateCatalogueItem }) => {
+  const [val, setVal] = useState(item.moq || '');
+  useEffect(() => setVal(item.moq || ''), [item.moq]);
+  const handleBlur = () => {
+    const newMoq = Number(val);
+    if (newMoq !== item.moq) {
+      updateCatalogueItem(selectedCatId, item.productId, { moq: newMoq });
+    }
+  };
+  return (
+    <Input 
+      type="number" 
+      value={val} 
+      onChange={(e) => setVal(e.target.value)} 
+      onBlur={handleBlur} 
+      onKeyDown={(e) => e.key === 'Enter' && e.target.blur()} 
+      style={{ width: '80px' }} 
+    />
+  );
+};
 
 export default function CatalogueEditor() {
-  const { catalogues, fetchCatalogues, createCatalogue, setLiveCatalogue, setOfflineCatalogue, deleteCatalogue, addCatalogueItem, removeCatalogueItem, updateCatalogueItem, updateWholesalePrintSettings, saveCatalogue } = useCatalogueStore();
+  const { catalogues, fetchCatalogues, createCatalogue, setLiveCatalogue, setOfflineCatalogue, deleteCatalogue, addCatalogueItem, removeCatalogueItem, updateCatalogueItem, updateWholesalePrintSettings, saveCatalogue, isLoading } = useCatalogueStore();
   const { products: globalProducts, fetchProducts } = useProductStore();
 
   useEffect(() => {
@@ -27,8 +69,7 @@ export default function CatalogueEditor() {
 
   const selectedCat = catalogues.find(c => c.id === selectedCatId);
 
-  const handleCreate = (e) => {
-    e.preventDefault();
+  const handleCreate = () => {
     if (!newCatName.trim()) return;
     createCatalogue(newCatName);
     setNewCatName('');
@@ -37,147 +78,163 @@ export default function CatalogueEditor() {
 
   // --- DETAIL VIEW ---
   if (selectedCat) {
+    const detailColumns = [
+      {
+        title: 'Product',
+        key: 'product',
+        render: (_, item) => {
+          const globalProd = globalProducts.find(p => p.id === item.productId);
+          if (!globalProd) return null;
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <img src={globalProd.image} alt={globalProd.name} style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} />
+              <div>
+                <Text strong style={{  display: 'block' }}>{globalProd.name}</Text>
+                <Text type="secondary" style={{ fontSize: '12px' }}>Retail: ₹{globalProd.price}</Text>
+              </div>
+            </div>
+          );
+        }
+      },
+      {
+        title: 'Wholesale Price (₹)',
+        key: 'wholesalePrice',
+        render: (_, item) => (
+          <EditableWholesalePriceInput selectedCatId={selectedCat.id} item={item} updateCatalogueItem={updateCatalogueItem} />
+        )
+      },
+      {
+        title: 'MOQ',
+        key: 'moq',
+        render: (_, item) => (
+          <EditableMoqInput selectedCatId={selectedCat.id} item={item} updateCatalogueItem={updateCatalogueItem} />
+        )
+      },
+      {
+        title: 'Actions',
+        key: 'actions',
+        align: 'right',
+        render: (_, item) => (
+          <Button 
+            type="text" 
+            danger
+            icon={<Trash2 size={16} />}
+            onClick={() => removeCatalogueItem(selectedCat.id, item.productId)}
+          />
+        )
+      }
+    ];
+
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button onClick={() => setSelectedCatId(null)} className="p-2 text-gray-400 hover:text-white hover:bg-vybe-glass rounded-lg transition-colors">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Button 
+              type="text" 
+              icon={<ArrowLeft size={20} />} 
+              onClick={() => setSelectedCatId(null)}
+              
+            />
             <div>
-              <h1 className="text-2xl font-bold text-white mb-1">{selectedCat.name}</h1>
-              <p className="text-sm text-gray-400">Manage products, MOQs, wholesale pricing, and custom print matrix.</p>
+              <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>{selectedCat.name}</Title>
+              <Text type="secondary">Manage products, MOQs, wholesale pricing, and custom print matrix.</Text>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="primary" onClick={() => saveCatalogue(selectedCat.id)}>
-              <CheckCircle className="w-4 h-4 mr-2" /> Save Draft
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Button type="primary" onClick={() => saveCatalogue(selectedCat.id)} icon={<CheckCircle size={16} />} style={{ fontWeight: 600, color: '#000' }}>
+              Save Draft
             </Button>
-            <Button variant="danger" onClick={() => { deleteCatalogue(selectedCat.id); setSelectedCatId(null); }}>
-              <Trash2 className="w-4 h-4 mr-2" /> Delete
+            <Button danger onClick={() => { deleteCatalogue(selectedCat.id); setSelectedCatId(null); }} icon={<Trash2 size={16} />}>
+              Delete
             </Button>
             {selectedCat.isLive ? (
-              <div className="flex items-center gap-2">
-                <span className="bg-vybe-neon text-black text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider flex items-center gap-1 h-10">
-                  <Globe className="w-3 h-3" /> Live
-                </span>
-                <Button variant="ghost" onClick={() => setOfflineCatalogue(selectedCat.id)}>Take Offline</Button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Tag color="lime" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 12px', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' }}>
+                  <Globe size={12} /> Live
+                </Tag>
+                <Button type="default" onClick={() => setOfflineCatalogue(selectedCat.id)} style={{ backgroundColor: 'transparent'}}>
+                  Take Offline
+                </Button>
               </div>
             ) : (
-              <Button variant="secondary" onClick={() => {
-                // To safely publish, first save the draft, then publish it
+              <Button type="default" onClick={() => {
                 saveCatalogue(selectedCat.id).then(() => setLiveCatalogue(selectedCat.id));
-              }}>Publish as Live</Button>
+              }} style={{  borderColor: '#a3ff12', color: '#a3ff12' }}>
+                Publish as Live
+              </Button>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Left Column: Products in Catalogue */}
-          <div className="xl:col-span-2 space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold text-white">Catalogue Products</h2>
-              <div className="flex gap-3">
-                <Button variant="secondary" onClick={() => setShowPrintSettingsModal(true)}>
-                  <Settings className="w-4 h-4 mr-2" /> Manage Wholesale Print Settings
-                </Button>
-                <Button onClick={() => setShowProductSelector(true)}><Plus className="w-4 h-4 mr-2" /> Browse Products</Button>
+        <Row gutter={[24, 24]}>
+          <Col xs={24} xl={16}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Title level={5} style={{  margin: 0 }}>Catalogue Products</Title>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <Button type="default" icon={<Settings size={16} />} onClick={() => setShowPrintSettingsModal(true)} style={{ backgroundColor: 'transparent'}}>
+                    Manage Wholesale Print Settings
+                  </Button>
+                  <Button type="primary" icon={<Plus size={16} />} onClick={() => setShowProductSelector(true)} style={{ fontWeight: 600, color: '#000' }}>
+                    Browse Products
+                  </Button>
+                </div>
               </div>
+
+              <Card  bodyStyle={{ padding: 0 }}>
+                <Table 
+                  columns={detailColumns}
+                  dataSource={selectedCat.items}
+                  rowKey="productId"
+                  pagination={false}
+                  loading={isLoading}
+                  locale={{
+                    emptyText: <Empty description="No products added to this catalogue." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                  }}
+                />
+              </Card>
             </div>
-
-            <GlassCard className="overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm text-gray-300">
-                  <thead className="bg-vybe-dark text-xs uppercase text-gray-400 border-b border-vybe-glassBorder">
-                    <tr>
-                      <th className="px-6 py-4">Product</th>
-                      <th className="px-6 py-4">Wholesale Price (₹)</th>
-                      <th className="px-6 py-4">MOQ</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {selectedCat.items.map((item) => {
-                      const globalProd = globalProducts.find(p => p.id === item.productId);
-                      if (!globalProd) return null;
-
-                      return (
-                        <tr key={item.productId} className="border-b border-vybe-glassBorder/50">
-                          <td className="px-6 py-4 flex items-center gap-3">
-                            <img src={globalProd.image} alt={globalProd.name} className="w-10 h-10 rounded object-cover" />
-                            <div>
-                              <p className="font-medium text-white">{globalProd.name}</p>
-                              <p className="text-xs text-gray-500">Retail: ₹{globalProd.price}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <input
-                              type="number"
-                              value={item.wholesalePrice}
-                              onChange={(e) => updateCatalogueItem(selectedCat.id, item.productId, { wholesalePrice: Number(e.target.value) })}
-                              className="bg-vybe-dark border border-vybe-glassBorder rounded px-2 py-1 w-24 text-white focus:border-vybe-neon focus:outline-none"
-                            />
-                          </td>
-                          <td className="px-6 py-4">
-                            <input
-                              type="number"
-                              value={item.moq}
-                              onChange={(e) => updateCatalogueItem(selectedCat.id, item.productId, { moq: Number(e.target.value) })}
-                              className="bg-vybe-dark border border-vybe-glassBorder rounded px-2 py-1 w-20 text-white focus:border-vybe-neon focus:outline-none"
-                            />
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button onClick={() => removeCatalogueItem(selectedCat.id, item.productId)} className="text-gray-500 hover:text-red-400 transition-colors">
-                              <Trash2 className="w-4 h-4 inline" />
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {selectedCat.items.length === 0 && (
-                      <tr><td colSpan="4" className="px-6 py-8 text-center text-gray-500">No products added to this catalogue.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </GlassCard>
-          </div>
-        </div>
+          </Col>
+        </Row>
 
         {/* Product Selector Modal */}
-        {showProductSelector && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <GlassCard className="w-full max-w-2xl p-6 relative flex flex-col max-h-[80vh]">
-              <button onClick={() => setShowProductSelector(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white"><X className="w-5 h-5" /></button>
-              <h2 className="text-xl font-bold text-white mb-6">Select Products to Add</h2>
-
-              <div className="overflow-y-auto custom-scrollbar flex-1 pr-2 space-y-2">
-                {globalProducts.map(prod => {
-                  const isAdded = selectedCat.items.some(item => item.productId === prod.id);
-                  return (
-                    <div key={prod.id} className="flex items-center justify-between p-3 bg-vybe-dark rounded-lg border border-vybe-glassBorder">
-                      <div className="flex items-center gap-3">
-                        <img src={prod.image} alt={prod.name} className="w-10 h-10 rounded object-cover" />
-                        <div>
-                          <p className="font-medium text-white">{prod.name}</p>
-                          <p className="text-xs text-gray-500">Retail: ₹{prod.price}</p>
-                        </div>
-                      </div>
-                      <Button
-                        variant={isAdded ? "ghost" : "primary"}
-                        size="sm"
-                        disabled={isAdded}
-                        onClick={() => addCatalogueItem(selectedCat.id, prod.id, Math.floor(prod.price * 0.6))} // Default wholesale to 60% of retail
-                      >
-                        {isAdded ? 'Added' : 'Add to Catalogue'}
-                      </Button>
+        <Modal
+          title="Select Products to Add"
+          open={showProductSelector}
+          onCancel={() => setShowProductSelector(false)}
+          footer={null}
+          width={600}
+          styles={{ 
+            body: { maxHeight: '60vh', overflowY: 'auto' },
+            content: { },
+            header: {  borderBottom: '1px solid #333' }}}
+          closeIcon={<X size={20} color="#888" />}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+            {globalProducts.map(prod => {
+              const isAdded = selectedCat.items.some(item => item.productId === prod.id);
+              return (
+                <div key={prod.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px',  borderRadius: '8px', border: '1px solid #333' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <img src={prod.image} alt={prod.name} style={{ width: '40px', height: '40px', borderRadius: '4px', objectFit: 'cover' }} />
+                    <div>
+                      <Text strong style={{  display: 'block' }}>{prod.name}</Text>
+                      <Text type="secondary" style={{ fontSize: '12px' }}>Retail: ₹{prod.price}</Text>
                     </div>
-                  );
-                })}
-              </div>
-            </GlassCard>
+                  </div>
+                  <Button
+                    type={isAdded ? 'default' : 'primary'}
+                    disabled={isAdded}
+                    onClick={() => addCatalogueItem(selectedCat.id, prod.id, Math.floor(prod.price * 0.6))}
+                    style={!isAdded ? { fontWeight: 600, color: '#000' } : { backgroundColor: 'transparent'}}
+                  >
+                    {isAdded ? 'Added' : 'Add to Catalogue'}
+                  </Button>
+                </div>
+              );
+            })}
           </div>
-        )}
+        </Modal>
 
         {/* Wholesale Print Settings Modal */}
         {showPrintSettingsModal && (
@@ -200,118 +257,129 @@ export default function CatalogueEditor() {
 
   // --- MASTER VIEW ---
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Wholesale Catalogues</h1>
-          <p className="text-sm text-gray-400">Manage your product catalogues. Only one catalogue can be live for buyers to order.</p>
+          <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Wholesale Catalogues</Title>
+          <Text type="secondary">Manage your product catalogues. Only one catalogue can be live for buyers to order.</Text>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="relative w-64">
-            <input
-              type="text"
-              placeholder="Search catalogues..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
-            />
-            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-          </div>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Input 
+            prefix={<Search size={16}  />} 
+            placeholder="Search catalogues..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ width: '256px'}}
+          />
+          <Button type="primary" icon={<Plus size={16} />} onClick={() => setShowCreateModal(true)} style={{ fontWeight: 600, color: '#000' }}>
             Create Catalogue
           </Button>
         </div>
       </div>
 
-      {catalogues.length === 0 && !showCreateModal && (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <div className="w-20 h-20 bg-vybe-dark rounded-full flex items-center justify-center mb-6 border border-vybe-glassBorder">
-            <BookOpen className="w-10 h-10 text-gray-500" />
-          </div>
-          <h2 className="text-xl font-bold text-white mb-2">No Catalogues Found</h2>
-          <p className="text-gray-400 mb-8 max-w-md">You haven't created any wholesale catalogues yet. Create your first catalogue to start adding products and print matrices.</p>
-          <Button onClick={() => setShowCreateModal(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Create First Catalogue
-          </Button>
-        </div>
+      {catalogues.length === 0 && !showCreateModal && !isLoading && (
+        <Card bodyStyle={{ padding: '80px 0' }}>
+          <Empty 
+            image={Empty.PRESENTED_IMAGE_SIMPLE}
+            description={
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
+                <span style={{ fontSize: '16px', fontWeight: 600 }}>No Catalogues Found</span>
+                <span style={{ color: '#888', maxWidth: '400px' }}>You haven't created any wholesale catalogues yet. Create your first catalogue to start adding products and print matrices.</span>
+              </div>
+            }
+          >
+            <Button type="primary" icon={<Plus size={16} />} onClick={() => setShowCreateModal(true)} style={{ fontWeight: 600, color: '#000', marginTop: '16px' }}>
+              Create First Catalogue
+            </Button>
+          </Empty>
+        </Card>
       )}
 
       {filteredCatalogues.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Row gutter={[24, 24]}>
           {filteredCatalogues.map((cat) => (
-            <GlassCard key={cat.id} className={`p-6 border transition-all duration-300 relative overflow-hidden ${cat.isLive ? 'border-vybe-neon shadow-[0_0_20px_rgba(163,255,18,0.1)]' : 'border-vybe-glassBorder hover:border-gray-500'}`}>
-
-              {cat.isLive && (
-                <div className="absolute top-0 right-0 bg-vybe-neon text-black text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider flex items-center gap-1">
-                  <Globe className="w-3 h-3" /> Live
+            <Col xs={24} md={12} lg={8} key={cat.id}>
+              <Card 
+                style={{ 
+                   
+                  borderColor: cat.isLive ? '#a3ff12' : '#333',
+                  boxShadow: cat.isLive ? '0 0 20px rgba(163,255,18,0.1)' : 'none',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                bodyStyle={{ padding: '24px' }}
+              >
+                {cat.isLive && (
+                  <div style={{ position: 'absolute', top: 0, right: 0, backgroundColor: '#a3ff12', color: '#000', fontSize: '10px', fontWeight: 'bold', padding: '4px 12px', borderBottomLeftRadius: '8px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Globe size={12} /> Live
+                  </div>
+                )}
+                
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ display: 'inline-flex', padding: '12px',  borderRadius: '12px', border: '1px solid #333' }}>
+                    <BookOpen size={24} color={cat.isLive ? '#a3ff12' : '#888'} />
+                  </div>
                 </div>
-              )}
 
-              <div className="flex items-start justify-between mb-4 mt-2">
-                <div className="p-3 bg-vybe-dark rounded-xl border border-vybe-glassBorder">
-                  <BookOpen className={`w-6 h-6 ${cat.isLive ? 'text-vybe-neon' : 'text-gray-400'}`} />
+                <Title level={5} style={{  margin: 0, marginBottom: '4px' }}>{cat.name}</Title>
+                <Text type="secondary" style={{ display: 'block', marginBottom: '24px', fontSize: '14px' }}>
+                  Created: {cat.dateCreated} • {cat.items?.length || 0} Products
+                </Text>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid #333' }}>
+                  <Button 
+                    type="primary" 
+                    icon={<Settings2 size={16} />} 
+                    onClick={() => setSelectedCatId(cat.id)}
+                    style={{ flex: 1, fontWeight: 600, color: '#000' }}
+                  >
+                    Configure
+                  </Button>
+                  <Button 
+                    type="text" 
+                    danger 
+                    icon={<Trash2 size={20} />} 
+                    onClick={() => deleteCatalogue(cat.id)}
+                  />
                 </div>
-              </div>
-
-              <h3 className="text-lg font-bold text-white mb-1">{cat.name}</h3>
-              <p className="text-sm text-gray-400 mb-6">Created: {cat.dateCreated} • {cat.items?.length || 0} Products</p>
-
-              <div className="flex items-center gap-3 pt-4 border-t border-vybe-glassBorder">
-                <Button
-                  variant="primary"
-                  fullWidth
-                  onClick={() => setSelectedCatId(cat.id)}
-                  className="justify-center"
-                >
-                  <Settings2 className="w-4 h-4 mr-2" /> Configure
-                </Button>
-
-                <button
-                  onClick={() => deleteCatalogue(cat.id)}
-                  className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                  title="Delete Catalogue"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </GlassCard>
+              </Card>
+            </Col>
           ))}
-        </div>
+        </Row>
       )}
 
       {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <GlassCard className="w-full max-w-md p-6 relative">
-            <button
-              onClick={() => setShowCreateModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold text-white mb-6">Create New Catalogue</h2>
-
-            <form onSubmit={handleCreate}>
-              <div className="space-y-4">
-                <Input
-                  label="Catalogue Name"
-                  placeholder="e.g. Winter 2026 Collection"
-                  value={newCatName}
-                  onChange={(e) => setNewCatName(e.target.value)}
-                  required
-                  autoFocus
-                />
-              </div>
-
-              <div className="mt-8 flex gap-3">
-                <Button type="button" variant="ghost" fullWidth onClick={() => setShowCreateModal(false)}>Cancel</Button>
-                <Button type="submit" variant="primary" fullWidth>Create Draft</Button>
-              </div>
-            </form>
-          </GlassCard>
+      <Modal
+        title="Create New Catalogue"
+        open={showCreateModal}
+        onCancel={() => setShowCreateModal(false)}
+        footer={null}
+        styles={{ 
+          content: { },
+          header: {  borderBottom: '1px solid #333' }}}
+        closeIcon={<X size={20} color="#888" />}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+          <div>
+            <Text style={{  display: 'block', marginBottom: '8px' }}>Catalogue Name</Text>
+            <Input 
+              placeholder="e.g. Winter 2026 Collection" 
+              value={newCatName} 
+              onChange={(e) => setNewCatName(e.target.value)} 
+              autoFocus
+              
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+            <Button type="default" block onClick={() => setShowCreateModal(false)} style={{ backgroundColor: 'transparent'}}>
+              Cancel
+            </Button>
+            <Button type="primary" block onClick={handleCreate} style={{ fontWeight: 600, color: '#000' }}>
+              Create Draft
+            </Button>
+          </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

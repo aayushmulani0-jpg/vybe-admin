@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
-import GlassCard from '../components/common/GlassCard';
-import Button from '../components/common/Button';
-import { Package, Eye, Send, X, CheckCircle, Truck, Clock, CreditCard, Building2, Download, Search } from 'lucide-react';
-import MockupViewer from '../components/custom-print/MockupViewer';
 import { useUIStore } from '../store/useUIStore';
+import { Package, Eye, Send, Search, X } from 'lucide-react';
+import MockupViewer from '../components/custom-print/MockupViewer';
+import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal } from 'antd';
+
+const { Title, Text } = Typography;
 
 export default function WholesaleOrders() {
-  const { wholesaleOrders, updateOrderDetails, fetchOrders } = useOrderStore();
+  const { wholesaleOrders, fetchOrders, updateOrderDetails, isLoading } = useOrderStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const { alert } = useUIStore();
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,12 +35,12 @@ export default function WholesaleOrders() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Delivered': return 'text-green-400 bg-green-500/10 border-green-500/30';
-      case 'Production': return 'text-orange-400 bg-orange-500/10 border-orange-500/30';
-      case 'Ready To Ship': return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
-      case 'Shipped': return 'text-purple-400 bg-purple-500/10 border-purple-500/30';
-      case 'Quotation Sent': return 'text-vybe-neon bg-vybe-neon/10 border-vybe-neon/30';
-      default: return 'text-gray-400 bg-gray-500/10 border-gray-500/30';
+      case 'Delivered': return 'success';
+      case 'Production': return 'warning';
+      case 'Ready To Ship': return 'processing';
+      case 'Shipped': return 'purple';
+      case 'Quotation Sent': return 'cyan';
+      default: return 'default';
     }
   };
 
@@ -61,194 +62,201 @@ export default function WholesaleOrders() {
     return matchesId || matchesCompany || matchesCustomer;
   });
 
+  const columns = [
+    {
+      title: 'Order ID',
+      dataIndex: 'id',
+      key: 'id',
+      render: (text) => <Text strong >{text.slice(-8).toUpperCase()}</Text>},
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      render: (text, record) => text || new Date(record.createdAt).toLocaleDateString()},
+    {
+      title: 'Company',
+      dataIndex: 'company',
+      key: 'company',
+      render: (text, record) => <Text strong>{text || record.customer}</Text>},
+    {
+      title: 'Est. Qty',
+      key: 'qty',
+      render: (_, record) => record.itemsList ? record.itemsList.reduce((sum, item) => sum + item.qty, 0) : record.items || record.quantity || 1},
+    {
+      title: 'Value',
+      key: 'total',
+      render: (_, record) => {
+        const total = record.total || (record.itemsList ? record.itemsList.reduce((sum, item) => sum + (item.itemTotal || (item.price * item.qty)), 0) : 0);
+        return <Text strong style={{ color: '#a3ff12' }}>₹{total.toLocaleString()}</Text>;
+      }},
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={getStatusColor(status)}>
+          {status}
+        </Tag>
+      )},
+    {
+      title: 'Actions',
+      key: 'actions',
+      align: 'right',
+      render: (_, record) => (
+        <Button 
+          type="text" 
+          icon={<Eye size={16} />} 
+          onClick={() => setSelectedOrder(record)} 
+          
+        />
+      )},
+  ];
+
   return (
-    <div className="space-y-6 pb-12">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Wholesale & B2B Orders</h1>
-          <p className="text-sm text-gray-400">Manage bulk inquiries, quotes, production tracking, and B2B logistics.</p>
+          <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Wholesale & B2B Orders</Title>
+          <Text type="secondary">Manage bulk inquiries, quotes, production tracking, and B2B logistics.</Text>
         </div>
-        <div className="relative w-64">
-          <input
-            type="text"
-            placeholder="Search by ID or Company..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
-          />
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-        </div>
+        <Input 
+          prefix={<Search size={16}  />} 
+          placeholder="Search by ID or Company..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ width: '256px'}}
+        />
       </div>
 
-      <GlassCard className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-300">
-            <thead className="bg-vybe-dark text-xs uppercase text-gray-400 border-b border-vybe-glassBorder">
-              <tr>
-                <th className="px-6 py-4">Order ID</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Company</th>
-                <th className="px-6 py-4">Est. Qty</th>
-                <th className="px-6 py-4">Value</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-white">{order.id.slice(-8).toUpperCase()}</td>
-                  <td className="px-6 py-4">{order.date || new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 font-semibold">{order.company || order.customer}</td>
-                  <td className="px-6 py-4">{order.itemsList ? order.itemsList.reduce((sum, item) => sum + item.qty, 0) : order.items || order.quantity || 1}</td>
-                  <td className="px-6 py-4 font-bold text-vybe-neon">
-                    ₹{order.total?.toLocaleString() || (order.itemsList ? order.itemsList.reduce((sum, item) => sum + (item.itemTotal || (item.price * item.qty)), 0) : 0).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button 
-                        onClick={() => setSelectedOrder(order)}
-                        className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-vybe-glassBorder" 
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredOrders.length === 0 && (
-                <tr>
-                  <td colSpan="7" className="px-6 py-16 text-center">
-                    <div className="w-16 h-16 bg-vybe-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-vybe-glassBorder">
-                      <Package className="w-8 h-8 text-gray-500" />
-                    </div>
-                    <h3 className="text-lg font-bold text-white mb-2">No Wholesale Inquiries</h3>
-                    <p className="text-sm text-gray-400 max-w-sm mx-auto">When B2B clients request quotes from your live catalogue, they will appear here.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </GlassCard>
+      <Card 
+        
+        bodyStyle={{ padding: 0 }}
+      >
+        <Table 
+          columns={columns} 
+          dataSource={filteredOrders} 
+          rowKey="id"
+          pagination={{ pageSize: 10 }}
+          loading={isLoading}
+          locale={{ 
+            emptyText: (
+              <div style={{ padding: '48px 0', textAlign: 'center' }}>
+                <Empty description="No Wholesale Inquiries" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              </div>
+            )
+          }}
+          scroll={{ x: 800 }}
+        />
+      </Card>
 
-      {/* Details Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto pt-20 pb-10 custom-scrollbar">
-          <GlassCard className="w-full max-w-4xl p-6 relative">
-            <button 
-              onClick={() => setSelectedOrder(null)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <div className="flex items-center gap-3 mb-6">
-              <h2 className="text-xl font-bold text-white">B2B Order: {selectedOrder.id.slice(-8).toUpperCase()}</h2>
-              <span className="bg-vybe-neon/10 text-vybe-neon border border-vybe-neon/30 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">Wholesale</span>
+      <Modal
+        title={
+          selectedOrder && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '20px' }}>B2B Order: {selectedOrder.id.slice(-8).toUpperCase()}</span>
+              <Tag color="cyan">Wholesale</Tag>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Visualizer Component */}
+          )
+        }
+        open={!!selectedOrder}
+        onCancel={() => setSelectedOrder(null)}
+        footer={null}
+        width={1000}
+        styles={{ 
+          body: { maxHeight: '75vh', overflowY: 'auto', paddingRight: '8px' },
+          content: {  padding: '24px' },
+          header: {  borderBottom: '1px solid #333', paddingBottom: '16px', marginBottom: '24px' }}}
+        closeIcon={<X size={20} color="#888" />}
+      >
+        {selectedOrder && (
+          <Row gutter={[32, 32]}>
+            <Col xs={24} md={12}>
               <MockupViewer order={selectedOrder} />
+            </Col>
 
-              {/* Order Metadata & Actions */}
-              <div className="flex flex-col justify-between space-y-6">
-                <div className="space-y-4 text-sm">
-                  <div className="flex justify-between border-b border-gray-800 pb-2">
-                    <span className="text-gray-400">Company</span>
-                    <span className="font-medium text-white">{selectedOrder.company || 'N/A'}</span>
+            <Col xs={24} md={12}>
+              <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                    <Text type="secondary">Company</Text>
+                    <Text strong >{selectedOrder.company || 'N/A'}</Text>
                   </div>
-                  <div className="flex justify-between border-b border-gray-800 pb-2">
-                    <span className="text-gray-400">Contact</span>
-                    <span className="font-medium text-white">{selectedOrder.customer || selectedOrder.contact}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                    <Text type="secondary">Contact</Text>
+                    <Text strong >{selectedOrder.customer || selectedOrder.contact}</Text>
                   </div>
                   {selectedOrder.email && (
-                    <div className="flex justify-between border-b border-gray-800 pb-2">
-                      <span className="text-gray-400">Email</span>
-                      <span className="font-medium text-white">{selectedOrder.email}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <Text type="secondary">Email</Text>
+                      <Text strong >{selectedOrder.email}</Text>
                     </div>
                   )}
                   {selectedOrder.phone && (
-                    <div className="flex justify-between border-b border-gray-800 pb-2">
-                      <span className="text-gray-400">Phone</span>
-                      <span className="font-medium text-white">{selectedOrder.phone}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <Text type="secondary">Phone</Text>
+                      <Text strong >{selectedOrder.phone}</Text>
                     </div>
                   )}
                   {selectedOrder.shippingAddress && (
-                    <div className="flex justify-between border-b border-gray-800 pb-2">
-                      <span className="text-gray-400">Shipping</span>
-                      <span className="font-medium text-white text-right max-w-[200px] break-words">{selectedOrder.shippingAddress}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                      <Text type="secondary">Shipping</Text>
+                      <Text strong style={{  textAlign: 'right', maxWidth: '200px', wordBreak: 'break-word' }}>{selectedOrder.shippingAddress}</Text>
                     </div>
                   )}
-                  <div className="flex justify-between border-b border-gray-800 pb-2">
-                    <span className="text-gray-400">Print Areas</span>
-                    <span className="font-medium text-white text-right max-w-[200px] break-words">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                    <Text type="secondary">Print Areas</Text>
+                    <Text strong style={{  textAlign: 'right', maxWidth: '200px', wordBreak: 'break-word' }}>
                       {selectedOrder.itemsList?.[0]?.selectedPrints?.map(p => p.name).join(', ') || 'N/A'}
-                    </span>
+                    </Text>
                   </div>
-                  <div className="flex justify-between border-b border-gray-800 pb-2">
-                    <span className="text-gray-400">Quoted Value</span>
-                    <span className="font-bold text-vybe-neon">₹{selectedOrder.total?.toLocaleString() || (selectedOrder.itemsList ? selectedOrder.itemsList.reduce((sum, item) => sum + (item.itemTotal || (item.price * item.qty)), 0) : 0).toLocaleString()}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '8px' }}>
+                    <Text type="secondary">Quoted Value</Text>
+                    <Text strong style={{ color: '#a3ff12', fontSize: '16px' }}>
+                      ₹{selectedOrder.total?.toLocaleString() || (selectedOrder.itemsList ? selectedOrder.itemsList.reduce((sum, item) => sum + (item.itemTotal || (item.price * item.qty)), 0) : 0).toLocaleString()}
+                    </Text>
                   </div>
 
                   {selectedOrder.itemsList && selectedOrder.itemsList.length > 0 && (
-                    <div className="pt-4 border-t border-vybe-glassBorder">
-                      <span className="text-gray-400 text-xs uppercase tracking-wider mb-2 block">Item Breakdown</span>
-                      <div className="space-y-2">
+                    <div style={{ marginTop: '16px' }}>
+                      <Text style={{ fontSize: 10, textTransform: 'uppercase',  fontWeight: 600, display: 'block', marginBottom: 8 }}>Item Breakdown</Text>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {selectedOrder.itemsList.map((item, idx) => (
-                          <div key={idx} className="bg-vybe-dark p-3 rounded-lg border border-vybe-glassBorder text-xs flex flex-col gap-2">
-                            <div className="flex justify-between">
-                              <span className="text-white font-medium">{item.name}</span>
-                              <span className="text-white font-bold">₹{(item.itemTotal || (item.price * item.qty)).toLocaleString()}</span>
+                          <div key={idx} style={{ backgroundColor: '#111', padding: '12px', borderRadius: '8px', border: '1px solid #333' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                              <Text strong >{item.name}</Text>
+                              <Text strong >₹{(item.itemTotal || (item.price * item.qty)).toLocaleString()}</Text>
                             </div>
-                            <div className="text-gray-400 flex justify-between">
+                            <div style={{ display: 'flex', justifyContent: 'space-between',  fontSize: '12px' }}>
                               <span>Bulk Qty: {item.qty} | Size: {item.selectedSize || 'N/A'}</span>
                               <span>₹{item.price}/unit</span>
                             </div>
                             
                             {item.selectedPrints && item.selectedPrints.length > 0 && (
-                              <div className="mt-1 pt-2 border-t border-vybe-glassBorder">
-                                <span className="text-gray-500 font-semibold mb-1 block uppercase">Customizations:</span>
-                                <div className="flex flex-wrap gap-2">
+                              <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #222' }}>
+                                <Text style={{ fontSize: 10,  display: 'block', marginBottom: '4px' }}>CUSTOMIZATIONS:</Text>
+                                <Space wrap size={[0, 4]}>
                                   {item.selectedPrints.map((p, i) => (
-                                    <span key={i} className="text-[10px] bg-vybe-neon/10 text-vybe-neon px-2 py-0.5 rounded border border-vybe-neon/20">
+                                    <Tag key={i} color="lime" style={{ margin: 0, marginRight: 4, backgroundColor: 'rgba(163,255,18,0.1)', borderColor: 'rgba(163,255,18,0.2)', color: '#a3ff12', fontSize: '10px' }}>
                                       {p.name} (+₹{p.cost}/unit)
-                                    </span>
+                                    </Tag>
                                   ))}
-                                </div>
+                                </Space>
                               </div>
                             )}
 
                             {item.uploadedImages && Object.keys(item.uploadedImages).length > 0 && (
-                              <div className="mt-1 pt-2 border-t border-vybe-glassBorder">
-                                <span className="text-gray-500 font-semibold mb-1 block uppercase">Attached Files:</span>
-                                <div className="flex flex-wrap gap-2">
+                              <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid #222' }}>
+                                <Text style={{ fontSize: 10,  display: 'block', marginBottom: '4px' }}>ATTACHED FILES:</Text>
+                                <Space wrap size={[8, 8]}>
                                   {Object.entries(item.uploadedImages).map(([zone, url]) => (
-                                    <a 
-                                      key={zone} 
-                                      href={url} 
-                                      target="_blank" 
-                                      rel="noreferrer"
-                                      className="group flex flex-col items-center gap-1 bg-vybe-dark border border-vybe-glassBorder p-1.5 rounded hover:border-vybe-neon transition-colors"
-                                    >
-                                      <div className="relative w-12 h-12 rounded overflow-hidden">
-                                        <img src={url} alt={zone} className="w-full h-full object-cover opacity-80 group-hover:opacity-30 transition-opacity" />
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                          <span className="bg-vybe-neon text-black text-[8px] font-bold px-1 py-0.5 rounded uppercase">
-                                            Open
-                                          </span>
-                                        </div>
+                                    <a key={zone} href={url} target="_blank" rel="noreferrer" style={{ display: 'block', textAlign: 'center' }}>
+                                      <div style={{ width: 48, height: 48,  border: '1px solid #333', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <img src={url} alt={zone} style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.8 }} />
                                       </div>
-                                      <span className="text-[9px] text-gray-400 group-hover:text-vybe-neon truncate max-w-full font-semibold">{zone}</span>
+                                      <Text style={{ fontSize: '9px'}}>{zone}</Text>
                                     </a>
                                   ))}
-                                </div>
+                                </Space>
                               </div>
                             )}
                           </div>
@@ -258,24 +266,26 @@ export default function WholesaleOrders() {
                   )}
 
                   {selectedOrder.notes && (
-                    <div className="mt-4 bg-orange-500/10 border border-orange-500/30 p-3 rounded-lg text-orange-300">
-                      <strong className="block text-xs uppercase mb-1">Client Note:</strong>
-                      {selectedOrder.notes}
+                    <div style={{ marginTop: '16px', backgroundColor: 'rgba(250, 140, 22, 0.1)', border: '1px solid rgba(250, 140, 22, 0.3)', padding: '12px', borderRadius: '8px' }}>
+                      <Text style={{ fontSize: 10, textTransform: 'uppercase', color: '#fa8c16', fontWeight: 600, display: 'block', marginBottom: 4 }}>Client Note:</Text>
+                      <Text style={{ color: '#fa8c16' }}>{selectedOrder.notes}</Text>
                     </div>
                   )}
                 </div>
 
-                <div className="space-y-3 pt-6 border-t border-vybe-glassBorder">
-                  <Button variant="primary" fullWidth className="justify-center">
-                    <Send className="w-4 h-4 mr-2" /> Send Official Quote / Invoice
+                <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #333', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <Button type="primary" block icon={<Send size={16} />} style={{ fontWeight: 600, color: '#000' }}>
+                    Send Official Quote / Invoice
                   </Button>
-                  <Button variant="secondary" fullWidth onClick={() => setSelectedOrder(null)}>Close Window</Button>
+                  <Button block onClick={() => setSelectedOrder(null)} style={{ backgroundColor: 'transparent'}}>
+                    Close Window
+                  </Button>
                 </div>
               </div>
-            </div>
-          </GlassCard>
-        </div>
-      )}
+            </Col>
+          </Row>
+        )}
+      </Modal>
     </div>
   );
 }

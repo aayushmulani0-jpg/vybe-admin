@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Pricing = require('../models/Pricing');
+const Setting = require('../models/Setting');
 
 // GET all pricing
 router.get('/', async (req, res) => {
@@ -68,16 +69,19 @@ router.delete('/:id', async (req, res) => {
 });
 
 // POST calculate custom print pricing
-router.post('/calculate-custom-print', (req, res) => {
+router.post('/calculate-custom-print', async (req, res) => {
   const { quantity, categoryBaseCost, printCosts } = req.body;
-  
+
   try {
     let q = Math.max(0, parseInt(quantity) || 0);
     if (q < 1) {
       return res.status(400).json({ message: 'Quantity must be at least 1' });
     }
 
-    let basePrice = q >= 15 ? 485 : 499;
+    const settings = await Setting.findOne({ singletonId: 'global_settings' });
+    const adminBasePrice = settings?.general?.plainTshirtBasePrice || 499;
+
+    let basePrice = q >= 15 ? (adminBasePrice - 14) : adminBasePrice;
     let finalBasePrice = basePrice + (categoryBaseCost || 0);
     let totalPrintCost = (printCosts || []).reduce((acc, cost) => acc + cost, 0);
     let pricePerPiece = finalBasePrice + totalPrintCost;

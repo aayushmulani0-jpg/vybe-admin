@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useUIStore } from '../store/useUIStore';
-import GlassCard from '../components/common/GlassCard';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
-import { Save, Settings2, LayoutTemplate, Type, Palette } from 'lucide-react';
+import { Card, Button, Input, Tabs, Typography, Row, Col } from 'antd';
+import { Save, Settings2, LayoutTemplate, Palette } from 'lucide-react';
+
+const { Title, Text } = Typography;
+const { TextArea } = Input;
 
 export default function Settings() {
   const { settings, fetchSettings, updateSettings, isLoading } = useSettingsStore();
@@ -69,192 +70,230 @@ export default function Settings() {
   };
 
   if (isLoading && !settings) {
-    return <div className="text-white">Loading settings...</div>;
+    return <div >Loading settings...</div>;
   }
 
-  return (
-    <div className="space-y-6 max-w-4xl pb-12">
-      <div>
-        <h1 className="text-2xl font-bold text-white mb-1">Global Settings</h1>
-        <p className="text-sm text-gray-400">Configure theme colors, border radii, and store details for the storefront.</p>
-      </div>
-
-      <div className="flex gap-4 border-b border-vybe-glassBorder mb-6">
-        <button
-          onClick={() => setActiveTab('theme')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
-            activeTab === 'theme' ? 'border-vybe-neon text-vybe-neon' : 'border-transparent text-gray-400 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2"><Palette className="w-4 h-4" /> Theme Colors</div>
-        </button>
-        <button
-          onClick={() => setActiveTab('ui')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
-            activeTab === 'ui' ? 'border-vybe-neon text-vybe-neon' : 'border-transparent text-gray-400 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2"><LayoutTemplate className="w-4 h-4" /> UI & Styling</div>
-        </button>
-        <button
-          onClick={() => setActiveTab('general')}
-          className={`pb-3 px-1 text-sm font-medium transition-colors border-b-2 ${
-            activeTab === 'general' ? 'border-vybe-neon text-vybe-neon' : 'border-transparent text-gray-400 hover:text-white'
-          }`}
-        >
-          <div className="flex items-center gap-2"><Settings2 className="w-4 h-4" /> General Info</div>
-        </button>
-      </div>
-
-      <GlassCard className="p-6">
-        {activeTab === 'theme' && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Storefront Colors</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Primary Background</label>
-                <div className="flex items-center gap-3">
+  const tabItems = [
+    {
+      key: 'theme',
+      label: <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Palette size={16} /> Theme Colors</span>,
+      children: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <Title level={5} style={{  margin: 0 }}>Storefront Colors</Title>
+          <Row gutter={[24, 24]}>
+            <Col xs={24} md={12}>
+              <div style={{ marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '14px',  marginBottom: '8px' }}>Primary Background</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <input
                     type="color"
                     value={formData.themeColors?.primary || '#000000'}
                     onChange={(e) => handleNestedChange('themeColors', 'primary', e.target.value)}
-                    className="w-12 h-12 rounded cursor-pointer bg-transparent border-0 p-0"
+                    style={{ width: '48px', height: '48px', borderRadius: '4px', cursor: 'pointer', padding: 0, border: 0, backgroundColor: 'transparent' }}
                   />
-                  <input
-                    type="text"
+                  <Input
                     value={formData.themeColors?.primary || '#000000'}
                     onChange={(e) => handleNestedChange('themeColors', 'primary', e.target.value)}
-                    className="bg-vybe-dark border border-vybe-glassBorder rounded-lg px-3 py-2 text-white focus:outline-none focus:border-vybe-neon font-mono text-sm uppercase"
+                    style={{    fontFamily: 'monospace', textTransform: 'uppercase' }}
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Secondary / Text Color</label>
-                <div className="flex items-center gap-3">
+            </Col>
+            <Col xs={24} md={12}>
+              <div style={{ marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '14px',  marginBottom: '8px' }}>Secondary / Text Color</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <input
                     type="color"
                     value={formData.themeColors?.secondary || '#FFFFFF'}
                     onChange={(e) => handleNestedChange('themeColors', 'secondary', e.target.value)}
-                    className="w-12 h-12 rounded cursor-pointer bg-transparent border-0 p-0"
+                    style={{ width: '48px', height: '48px', borderRadius: '4px', cursor: 'pointer', padding: 0, border: 0, backgroundColor: 'transparent' }}
                   />
-                  <input
-                    type="text"
+                  <Input
                     value={formData.themeColors?.secondary || '#FFFFFF'}
                     onChange={(e) => handleNestedChange('themeColors', 'secondary', e.target.value)}
-                    className="bg-vybe-dark border border-vybe-glassBorder rounded-lg px-3 py-2 text-white focus:outline-none focus:border-vybe-neon font-mono text-sm uppercase"
+                    style={{    fontFamily: 'monospace', textTransform: 'uppercase' }}
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-400 mb-2">Accent / Highlight Color</label>
-                <div className="flex items-center gap-3">
+            </Col>
+            <Col xs={24} md={12}>
+              <div style={{ marginBottom: '8px' }}>
+                <label style={{ display: 'block', fontSize: '14px',  marginBottom: '8px' }}>Accent / Highlight Color</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <input
                     type="color"
                     value={formData.themeColors?.accent || '#A3FF12'}
                     onChange={(e) => handleNestedChange('themeColors', 'accent', e.target.value)}
-                    className="w-12 h-12 rounded cursor-pointer bg-transparent border-0 p-0"
+                    style={{ width: '48px', height: '48px', borderRadius: '4px', cursor: 'pointer', padding: 0, border: 0, backgroundColor: 'transparent' }}
                   />
-                  <input
-                    type="text"
+                  <Input
                     value={formData.themeColors?.accent || '#A3FF12'}
                     onChange={(e) => handleNestedChange('themeColors', 'accent', e.target.value)}
-                    className="bg-vybe-dark border border-vybe-glassBorder rounded-lg px-3 py-2 text-white focus:outline-none focus:border-vybe-neon font-mono text-sm uppercase"
+                    style={{    fontFamily: 'monospace', textTransform: 'uppercase' }}
                   />
                 </div>
               </div>
-            </div>
+            </Col>
+          </Row>
+        </div>
+      )
+    },
+    {
+      key: 'ui',
+      label: <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LayoutTemplate size={16} /> UI & Styling</span>,
+      children: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <div>
+            <Title level={5} style={{  margin: 0, marginBottom: '8px' }}>Border Radius</Title>
+            <Text type="secondary">Use CSS values like 0px, 8px, 0.5rem, or 9999px (for pill shape).</Text>
           </div>
-        )}
+          
+          <Row gutter={[24, 24]}>
+            <Col xs={24} md={12}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '14px',  marginBottom: '8px' }}>Button Border Radius</label>
+                <Input
+                  value={formData.borderRadius?.button || '0px'}
+                  onChange={(e) => handleNestedChange('borderRadius', 'button', e.target.value)}
+                  placeholder="e.g. 0px or 9999px"
+                  
+                />
+              </div>
+            </Col>
+            <Col xs={24} md={12}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '14px',  marginBottom: '8px' }}>Popup/Modal Border Radius</label>
+                <Input
+                  value={formData.borderRadius?.popup || '0.75rem'}
+                  onChange={(e) => handleNestedChange('borderRadius', 'popup', e.target.value)}
+                  placeholder="e.g. 1rem or 0px"
+                  
+                />
+              </div>
+            </Col>
+          </Row>
 
-        {activeTab === 'ui' && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Border Radius</h3>
-            <p className="text-sm text-gray-400 mb-4">Use CSS values like <code className="text-vybe-neon bg-white/5 px-1 rounded">0px</code>, <code className="text-vybe-neon bg-white/5 px-1 rounded">8px</code>, <code className="text-vybe-neon bg-white/5 px-1 rounded">0.5rem</code>, or <code className="text-vybe-neon bg-white/5 px-1 rounded">9999px</code> (for pill shape).</p>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Button Border Radius"
-                value={formData.borderRadius?.button || '0px'}
-                onChange={(e) => handleNestedChange('borderRadius', 'button', e.target.value)}
-                placeholder="e.g. 0px or 9999px"
-              />
-              <Input
-                label="Popup/Modal Border Radius"
-                value={formData.borderRadius?.popup || '0.75rem'}
-                onChange={(e) => handleNestedChange('borderRadius', 'popup', e.target.value)}
-                placeholder="e.g. 1rem or 0px"
-              />
-            </div>
-
-            <div className="mt-8 p-6 bg-vybe-dark border border-vybe-glassBorder rounded-xl">
-              <h4 className="text-sm font-medium text-gray-400 mb-4 uppercase tracking-wider">Live Preview</h4>
-              <div className="flex items-center gap-4">
-                <button
-                  className="px-6 py-3 font-semibold uppercase tracking-widest text-sm transition-all"
-                  style={{
-                    backgroundColor: formData.themeColors?.accent || '#A3FF12',
-                    color: formData.themeColors?.primary || '#000000',
-                    borderRadius: formData.borderRadius?.button || '0px'
-                  }}
-                >
-                  Sample Button
-                </button>
-                <div 
-                  className="px-6 py-4 border border-vybe-glassBorder flex items-center justify-center text-sm font-medium"
-                  style={{
-                    backgroundColor: formData.themeColors?.primary || '#000000',
-                    color: formData.themeColors?.secondary || '#FFFFFF',
-                    borderRadius: formData.borderRadius?.popup || '0.75rem'
-                  }}
-                >
-                  Sample Popup / Card
-                </div>
+          <Card  bodyStyle={{ padding: '24px' }}>
+            <Title level={5} style={{  textTransform: 'uppercase', fontSize: '12px', letterSpacing: '1px', marginTop: 0 }}>Live Preview</Title>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <button
+                style={{
+                  padding: '12px 24px',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  fontSize: '14px',
+                  transition: 'all 0.2s',
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: formData.themeColors?.accent || '#A3FF12',
+                  color: formData.themeColors?.primary || '#000000',
+                  borderRadius: formData.borderRadius?.button || '0px'
+                }}
+              >
+                Sample Button
+              </button>
+              <div 
+                style={{
+                  padding: '16px 24px',
+                  border: '1px solid #333',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  fontWeight: 500,
+                  backgroundColor: formData.themeColors?.primary || '#000000',
+                  color: formData.themeColors?.secondary || '#FFFFFF',
+                  borderRadius: formData.borderRadius?.popup || '0.75rem'
+                }}
+              >
+                Sample Popup / Card
               </div>
             </div>
-          </div>
-        )}
-
-        {activeTab === 'general' && (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-white mb-4">Store Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Store Name"
-                value={formData.general?.storeName || ''}
-                onChange={(e) => handleNestedChange('general', 'storeName', e.target.value)}
-              />
-              <Input
-                label="Support Email"
-                value={formData.general?.supportEmail || ''}
-                onChange={(e) => handleNestedChange('general', 'supportEmail', e.target.value)}
-              />
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-400 mb-2">Announcement / Notice Bar</label>
-                <textarea
+          </Card>
+        </div>
+      )
+    },
+    {
+      key: 'general',
+      label: <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Settings2 size={16} /> General Info</span>,
+      children: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          <Title level={5} style={{  margin: 0 }}>Store Information</Title>
+          <Row gutter={[24, 24]}>
+            <Col xs={24} md={12}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '14px',  marginBottom: '8px' }}>Store Name</label>
+                <Input
+                  value={formData.general?.storeName || ''}
+                  onChange={(e) => handleNestedChange('general', 'storeName', e.target.value)}
+                  
+                />
+              </div>
+            </Col>
+            <Col xs={24} md={12}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '14px',  marginBottom: '8px' }}>Support Email</label>
+                <Input
+                  value={formData.general?.supportEmail || ''}
+                  onChange={(e) => handleNestedChange('general', 'supportEmail', e.target.value)}
+                  
+                />
+              </div>
+            </Col>
+            <Col xs={24}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '14px',  marginBottom: '8px' }}>Announcement / Notice Bar</label>
+                <TextArea
                   value={formData.general?.announcement || ''}
                   onChange={(e) => handleNestedChange('general', 'announcement', e.target.value)}
                   placeholder="Enter a message. For a scrolling marquee with multiple notices, enter each on a new line."
-                  className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-3 text-white focus:outline-none focus:border-vybe-neon transition-colors resize-none"
-                  rows={3}
+                  autoSize={{ minRows: 3, maxRows: 6 }}
+                  
                 />
-                <p className="text-xs text-gray-500 mt-2">This will appear on all pages of the storefront. If you enter multiple lines, it will scroll like a marquee.</p>
+                <Text type="secondary" style={{ fontSize: '12px', display: 'block', marginTop: '8px' }}>
+                  This will appear on all pages of the storefront. If you enter multiple lines, it will scroll like a marquee.
+                </Text>
               </div>
-            </div>
-          </div>
-        )}
+            </Col>
+          </Row>
+        </div>
+      )
+    }
+  ];
 
-        <div className="mt-8 pt-6 border-t border-vybe-glassBorder flex justify-between items-center">
-          <button 
+  return (
+    <div style={{ maxWidth: '896px', paddingBottom: '48px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div>
+        <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Global Settings</Title>
+        <Text type="secondary">Configure theme colors, border radii, and store details for the storefront.</Text>
+      </div>
+
+      <Card 
+         
+        bodyStyle={{ padding: '24px' }}
+      >
+        <Tabs 
+          activeKey={activeTab} 
+          onChange={setActiveTab} 
+          items={tabItems} 
+          tabBarStyle={{ marginBottom: '24px'}}
+        />
+
+        <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Button 
+            type="link" 
             onClick={handleRestoreDefaults}
-            className="text-gray-400 hover:text-white text-sm underline transition-colors"
+            style={{  textDecoration: 'underline', padding: 0 }}
           >
             Restore Defaults
-          </button>
-          <Button variant="primary" onClick={handleSave}>
-            <Save className="w-4 h-4 mr-2" /> Save Settings
+          </Button>
+          <Button type="primary" onClick={handleSave} icon={<Save size={16} />} style={{ fontWeight: 500, color: '#000' }}>
+            Save Settings
           </Button>
         </div>
-      </GlassCard>
+      </Card>
     </div>
   );
 }

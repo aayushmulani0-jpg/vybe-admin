@@ -8,8 +8,7 @@ const PRINT_ZONES = {
   'A4 Print': { top: '40%', left: '50%', transform: 'translateX(-50%)', width: '35%', height: '40%' },
   'A3 Print': { top: '35%', left: '50%', transform: 'translateX(-50%)', width: '45%', height: '55%' },
   'Sleeve Print': { top: '45%', left: '25%', width: '15%', height: '20%' },
-  'Front + Back Print': { top: '40%', left: '50%', transform: 'translateX(-50%)', width: '35%', height: '40%' },
-};
+  'Front + Back Print': { top: '40%', left: '50%', transform: 'translateX(-50%)', width: '35%', height: '40%' }};
 
 export default function MockupViewer({ order }) {
   if (!order) return null;
@@ -62,8 +61,7 @@ export default function MockupViewer({ order }) {
                   left: zoneStyle.left,
                   width: zoneStyle.width,
                   height: zoneStyle.height,
-                  transform: zoneStyle.transform,
-                }}
+                  transform: zoneStyle.transform}}
                 className="border border-vybe-neon/50 border-dashed flex flex-col items-center justify-center overflow-hidden z-20 bg-black/20 backdrop-blur-[1px]"
               >
                 <img src={url} alt="Design" className="w-full h-full object-contain pointer-events-auto" />

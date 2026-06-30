@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useCustomerStore } from '../store/useCustomerStore';
-import GlassCard from '../components/common/GlassCard';
-import Button from '../components/common/Button';
 import { Users, Eye, X, Mail, ShoppingBag, TrendingUp, Calendar, MapPin, Tag, Search } from 'lucide-react';
+import { Table, Card, Input, Button, Tag as AntTag, Typography, Row, Col, Space, Empty, Modal } from 'antd';
+
+const { Title, Text } = Typography;
 
 export default function Customers() {
   const { customers, isLoading, fetchCustomersAndOrders } = useCustomerStore();
@@ -20,256 +21,273 @@ export default function Customers() {
     return matchesName || matchesEmail;
   });
 
+  const columns = [
+    {
+      title: 'Name',
+      dataIndex: 'name',
+      key: 'name',
+      render: (text) => <Text strong >{text}</Text>},
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email'},
+    {
+      title: 'Total Orders',
+      dataIndex: 'orderCount',
+      key: 'orderCount',
+      render: (text) => <Text strong >{text}</Text>},
+    {
+      title: 'Lifetime Spent',
+      dataIndex: 'totalSpent',
+      key: 'totalSpent',
+      render: (text) => <Text strong style={{ color: '#a3ff12' }}>₹{text?.toLocaleString() || 0}</Text>},
+    {
+      title: 'Type',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type) => (
+        <AntTag color={type === 'Repeat' ? 'lime' : 'blue'} style={type === 'Repeat' ? { backgroundColor: 'rgba(163,255,18,0.1)', borderColor: 'rgba(163,255,18,0.3)', color: '#a3ff12' } : {}}>
+          {type}
+        </AntTag>
+      )},
+    {
+      title: 'Actions',
+      key: 'actions',
+      align: 'right',
+      render: (_, record) => (
+        <Button 
+          type="text" 
+          icon={<Eye size={16} />} 
+          onClick={() => setSelectedCustomer(record)} 
+          
+          title="View Full Profile"
+        />
+      )},
+  ];
+
   return (
-    <div className="space-y-6 pb-12">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Customers</h1>
-          <p className="text-sm text-gray-400">View registered users, order history, and lifetime value.</p>
+          <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Customers</Title>
+          <Text type="secondary">View registered users, order history, and lifetime value.</Text>
         </div>
-        <div className="relative w-64">
-          <input
-            type="text"
-            placeholder="Search by name or email..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
-          />
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-        </div>
+        <Input 
+          prefix={<Search size={16}  />} 
+          placeholder="Search by name or email..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ width: '256px'}}
+        />
       </div>
 
-      <GlassCard className="overflow-hidden">
-        {isLoading ? (
-          <div className="p-12 text-center text-gray-400">Loading customers...</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-gray-300">
-              <thead className="bg-vybe-dark text-xs uppercase text-gray-400 border-b border-vybe-glassBorder">
-                <tr>
-                  <th className="px-6 py-4">Name</th>
-                  <th className="px-6 py-4">Email</th>
-                  <th className="px-6 py-4">Total Orders</th>
-                  <th className="px-6 py-4">Lifetime Spent</th>
-                  <th className="px-6 py-4">Type</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCustomers.map((customer) => (
-                  <tr key={customer._id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-white">{customer.name}</td>
-                    <td className="px-6 py-4">{customer.email}</td>
-                    <td className="px-6 py-4 font-semibold text-white">{customer.orderCount}</td>
-                    <td className="px-6 py-4 font-bold text-vybe-neon">₹{customer.totalSpent?.toLocaleString() || 0}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold uppercase tracking-wider border ${customer.type === 'Repeat' ? 'text-vybe-neon bg-vybe-neon/10 border-vybe-neon/30' : 'text-blue-400 bg-blue-500/10 border-blue-500/30'}`}>
-                        {customer.type}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedCustomer(customer)}
-                        className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-vybe-glassBorder"
-                        title="View Full Profile"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {filteredCustomers.length === 0 && !isLoading && (
-                  <tr>
-                    <td colSpan="6" className="px-6 py-16 text-center">
-                      <div className="w-16 h-16 bg-vybe-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-vybe-glassBorder">
-                        <Users className="w-8 h-8 text-gray-500" />
-                      </div>
-                      <h3 className="text-lg font-bold text-white mb-2">No Customers Yet</h3>
-                      <p className="text-sm text-gray-400 max-w-sm mx-auto">When users register on your storefront, they will appear here.</p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </GlassCard>
+      <Card 
+        
+        bodyStyle={{ padding: 0 }}
+      >
+        <Table 
+          columns={columns} 
+          dataSource={filteredCustomers} 
+          rowKey="_id"
+          loading={isLoading}
+          pagination={{ pageSize: 10 }}
+          locale={{ 
+            emptyText: (
+              <div style={{ padding: '48px 0', textAlign: 'center' }}>
+                <Empty description="No Customers Yet" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              </div>
+            )
+          }}
+          scroll={{ x: 800 }}
+        />
+      </Card>
 
       {/* Full Customer Profile Modal */}
-      {selectedCustomer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#1A1A1A] w-full max-w-5xl h-[90vh] border border-white/10 rounded-xl shadow-2xl relative flex flex-col">
-
+      <Modal
+        title={null}
+        open={!!selectedCustomer}
+        onCancel={() => setSelectedCustomer(null)}
+        footer={null}
+        width={1000}
+        closeIcon={null}
+        styles={{ 
+          body: { padding: 0, maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' },
+          content: {  padding: 0, overflow: 'hidden', borderRadius: '12px' }}}
+      >
+        {selectedCustomer && (
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxHeight: '90vh' }}>
             {/* Header */}
-            <div className="p-6 border-b border-white/10 flex justify-between items-start bg-[#1A1A1A] z-10 rounded-t-xl shrink-0">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-vybe-neon/20 to-purple-500/20 border border-vybe-neon/50 rounded-full flex items-center justify-center text-xl font-bold text-white uppercase shadow-[0_0_15px_rgba(204,255,0,0.15)]">
+            <div style={{ padding: '24px', borderBottom: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '56px', height: '56px', background: 'linear-gradient(to bottom right, rgba(163,255,18,0.2), rgba(168,85,247,0.2))', border: '1px solid rgba(163,255,18,0.5)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold',  textTransform: 'uppercase', boxShadow: '0 0 15px rgba(204,255,0,0.15)' }}>
                   {selectedCustomer.name.charAt(0)}
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-white">{selectedCustomer.name}</h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${selectedCustomer.type === 'Repeat' ? 'text-vybe-neon bg-vybe-neon/10 border-vybe-neon/30' : 'text-blue-400 bg-blue-500/10 border-blue-500/30'}`}>
+                  <Title level={3} style={{  margin: 0, marginBottom: '4px' }}>{selectedCustomer.name}</Title>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AntTag color={selectedCustomer.type === 'Repeat' ? 'lime' : 'blue'} style={{ margin: 0, fontWeight: 'bold', textTransform: 'uppercase' }}>
                       {selectedCustomer.type} Customer
-                    </span>
-                    <span className="text-sm text-gray-400 flex items-center gap-1">
-                      <Calendar className="w-3 h-3" /> Joined {new Date(selectedCustomer.createdAt).toLocaleDateString()}
-                    </span>
+                    </AntTag>
+                    <Text type="secondary" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}>
+                      <Calendar size={12} /> Joined {new Date(selectedCustomer.createdAt).toLocaleDateString()}
+                    </Text>
                   </div>
                 </div>
               </div>
-              <button onClick={() => setSelectedCustomer(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              <Button type="text" icon={<X size={20} />} onClick={() => setSelectedCustomer(null)}  />
             </div>
 
-            <div className="p-6 flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-              {/* Left Column: Contact & Stats */}
-              <div className="space-y-6">
-
-                {/* Stats Summary */}
-                <div className="bg-black/20 p-5 rounded-lg border border-white/5">
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Customer Value</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white/[0.02] p-3 rounded border border-white/5">
-                      <p className="text-gray-500 text-xs mb-1">Total Orders</p>
-                      <p className="font-bold text-xl text-white">{selectedCustomer.orderCount}</p>
+            <div style={{ padding: '24px', flex: 1, overflowY: 'auto' }}>
+              <Row gutter={[24, 24]}>
+                {/* Left Column: Contact & Stats */}
+                <Col xs={24} lg={8}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* Stats Summary */}
+                    <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <Text style={{ fontSize: '12px', fontWeight: 600,  textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '16px' }}>Customer Value</Text>
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <Text style={{ fontSize: '12px',  display: 'block', marginBottom: '4px' }}>Total Orders</Text>
+                            <Text strong style={{ fontSize: '20px'}}>{selectedCustomer.orderCount}</Text>
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <div style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                            <Text style={{ fontSize: '12px',  display: 'block', marginBottom: '4px' }}>Lifetime Spent</Text>
+                            <Text strong style={{ fontSize: '20px', color: '#a3ff12' }}>₹{selectedCustomer.totalSpent?.toLocaleString() || 0}</Text>
+                          </div>
+                        </Col>
+                      </Row>
                     </div>
-                    <div className="bg-white/[0.02] p-3 rounded border border-white/5">
-                      <p className="text-gray-500 text-xs mb-1">Lifetime Spent</p>
-                      <p className="font-bold text-xl text-vybe-neon">₹{selectedCustomer.totalSpent?.toLocaleString() || 0}</p>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Contact Info */}
-                <div className="bg-black/20 p-5 rounded-lg border border-white/5">
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Contact Info</h3>
-                  <div className="space-y-4 text-sm">
-                    <div className="flex items-start gap-3">
-                      <Mail className="w-4 h-4 text-gray-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-white break-all">{selectedCustomer.email}</p>
-                        <p className="text-xs text-gray-500">Primary Email</p>
+                    {/* Contact Info */}
+                    <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <Text style={{ fontSize: '12px', fontWeight: 600,  textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '16px' }}>Contact Info</Text>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                        <Mail size={16} color="#888" style={{ marginTop: '2px' }} />
+                        <div>
+                          <Text strong style={{  display: 'block', wordBreak: 'break-all' }}>{selectedCustomer.email}</Text>
+                          <Text type="secondary" style={{ fontSize: '12px' }}>Primary Email</Text>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
 
-                {/* Saved Addresses */}
-                <div className="bg-black/20 p-5 rounded-lg border border-white/5">
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Saved Addresses ({selectedCustomer.addresses?.length || 0})</h3>
-                  {selectedCustomer.addresses && selectedCustomer.addresses.length > 0 ? (
-                    <div className="space-y-3">
-                      {selectedCustomer.addresses.map((addr, i) => (
-                        <div key={i} className="bg-white/[0.02] p-3 rounded border border-white/5 text-sm">
-                          <div className="flex justify-between items-center mb-1">
-                            <span className="font-semibold text-white flex items-center gap-1.5"><MapPin className="w-3 h-3 text-vybe-neon" /> {addr.label || 'Home'}</span>
-                            {addr.isDefault && <span className="text-[9px] bg-white/10 text-gray-300 px-1.5 py-0.5 rounded uppercase">Default</span>}
-                          </div>
-                          <p className="text-gray-400 text-xs leading-relaxed">{addr.street}, {addr.city}, {addr.state} - {addr.zipCode}</p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 italic">No saved addresses.</p>
-                  )}
-                </div>
-
-              </div>
-
-              {/* Right Column: Ordered Items Ledger */}
-              <div className="lg:col-span-2">
-                <div className="bg-black/20 rounded-lg border border-white/5 h-full flex flex-col">
-                  <div className="p-5 border-b border-white/5 flex items-center gap-2 shrink-0">
-                    <ShoppingBag className="w-4 h-4 text-gray-400" />
-                    <h3 className="text-sm font-semibold text-white">Purchase Ledger</h3>
-                  </div>
-
-                  <div className="p-5 flex-1 overflow-y-auto custom-scrollbar">
-                    {selectedCustomer.purchasedItems && selectedCustomer.purchasedItems.length > 0 ? (
-                      <div className="space-y-4">
-                        {selectedCustomer.purchasedItems.map((item, idx) => (
-                          <div key={idx} className="flex gap-4 p-4 bg-white/[0.02] border border-white/5 rounded-lg hover:border-white/10 transition-colors">
-                            <div className="w-20 h-20 bg-neutral-900 rounded border border-white/10 overflow-hidden flex-shrink-0">
-                              <img
-                                src={item.image || 'https://via.placeholder.com/150'}
-                                alt={item.name}
-                                onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/150'; }}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <h4 className="font-semibold text-white text-base truncate">{item.name}</h4>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-xs text-gray-400 bg-neutral-900 px-2 py-0.5 rounded border border-white/5">Order: #{item.orderId?.slice(-6).toUpperCase()}</span>
-                                    <span className="text-[10px] text-gray-500">{item.orderDate}</span>
-                                    {item.orderType && (
-                                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase ${item.orderType === 'Wholesale' ? 'text-blue-400 bg-blue-500/10 border-blue-500/30' :
-                                        item.orderType === 'CustomPrint' ? 'text-purple-400 bg-purple-500/10 border-purple-500/30' :
-                                          'text-vybe-neon bg-vybe-neon/10 border-vybe-neon/30'
-                                        }`}>
-                                        {item.orderType}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <span className="font-bold text-white text-lg ml-2">₹{(item.itemTotal || (item.price * item.qty)).toLocaleString()}</span>
+                    {/* Saved Addresses */}
+                    <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '20px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <Text style={{ fontSize: '12px', fontWeight: 600,  textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '16px' }}>Saved Addresses ({selectedCustomer.addresses?.length || 0})</Text>
+                      {selectedCustomer.addresses && selectedCustomer.addresses.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {selectedCustomer.addresses.map((addr, i) => (
+                            <div key={i} style={{ backgroundColor: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                <Text strong style={{  display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <MapPin size={12} color="#a3ff12" /> {addr.label || 'Home'}
+                                </Text>
+                                {addr.isDefault && <AntTag style={{ margin: 0, fontSize: '10px' }}>DEFAULT</AntTag>}
                               </div>
+                              <Text type="secondary" style={{ fontSize: '12px', lineHeight: '1.5' }}>{addr.street}, {addr.city}, {addr.state} - {addr.zipCode}</Text>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <Text type="secondary" style={{ fontSize: '14px', fontStyle: 'italic' }}>No saved addresses.</Text>
+                      )}
+                    </div>
+                  </div>
+                </Col>
 
-                              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-400">
-                                <span>Qty: <span className="text-white font-medium">{item.qty}</span> @ ₹{item.price}</span>
-                                {(item.selectedSize || item.selectedColor) && (
-                                  <>
-                                    <span className="text-white/20">|</span>
-                                    {item.selectedSize && <span>Size: <span className="text-white font-medium">{item.selectedSize}</span></span>}
-                                    {item.selectedColor && (
-                                      <span className="flex items-center gap-1">Color:
-                                        <span className="w-3 h-3 rounded-full border border-white/20 inline-block ml-1" style={{ backgroundColor: item.selectedColor.toLowerCase() }}></span>
-                                        <span className="text-white font-medium">{item.selectedColor}</span>
-                                      </span>
-                                    )}
-                                  </>
+                {/* Right Column: Ordered Items Ledger */}
+                <Col xs={24} lg={16}>
+                  <div style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                    <div style={{ padding: '20px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                      <ShoppingBag size={16} color="#888" />
+                      <Text strong >Purchase Ledger</Text>
+                    </div>
+
+                    <div style={{ padding: '20px', flex: 1, overflowY: 'auto' }}>
+                      {selectedCustomer.purchasedItems && selectedCustomer.purchasedItems.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          {selectedCustomer.purchasedItems.map((item, idx) => (
+                            <div key={idx} style={{ display: 'flex', gap: '16px', padding: '16px', backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px' }}>
+                              <div style={{ width: '80px', height: '80px', backgroundColor: '#111', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden', flexShrink: 0 }}>
+                                <img
+                                  src={item.image || 'https://via.placeholder.com/150'}
+                                  alt={item.name}
+                                  onError={(e) => { e.target.onerror = null; e.target.src = 'https://via.placeholder.com/150'; }}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                                  <div>
+                                    <Text strong style={{  fontSize: '16px', display: 'block', marginBottom: '4px' }}>{item.name}</Text>
+                                    <Space size="small" style={{ flexWrap: 'wrap' }}>
+                                      <AntTag color="default" style={{ margin: 0 }}>Order: #{item.orderId?.slice(-6).toUpperCase()}</AntTag>
+                                      <Text type="secondary" style={{ fontSize: '10px' }}>{item.orderDate}</Text>
+                                      {item.orderType && (
+                                        <AntTag color={
+                                          item.orderType === 'Wholesale' ? 'blue' :
+                                          item.orderType === 'CustomPrint' ? 'purple' : 'lime'
+                                        } style={{ margin: 0, fontWeight: 'bold', textTransform: 'uppercase' }}>
+                                          {item.orderType}
+                                        </AntTag>
+                                      )}
+                                    </Space>
+                                  </div>
+                                  <Text strong style={{  fontSize: '18px', marginLeft: '8px' }}>₹{(item.itemTotal || (item.price * item.qty)).toLocaleString()}</Text>
+                                </div>
+
+                                <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '16px' }}>
+                                  <Text type="secondary" style={{ fontSize: '14px' }}>Qty: <Text strong >{item.qty}</Text> @ ₹{item.price}</Text>
+                                  {(item.selectedSize || item.selectedColor) && (
+                                    <>
+                                      <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                                      {item.selectedSize && <Text type="secondary" style={{ fontSize: '14px' }}>Size: <Text strong >{item.selectedSize}</Text></Text>}
+                                      {item.selectedColor && (
+                                        <Text type="secondary" style={{ fontSize: '14px', display: 'flex', alignItems: 'center', gap: '4px' }}>Color:
+                                          <span style={{ width: '12px', height: '12px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', backgroundColor: item.selectedColor.toLowerCase(), display: 'inline-block' }}></span>
+                                          <Text strong >{item.selectedColor}</Text>
+                                        </Text>
+                                      )}
+                                    </>
+                                  )}
+                                </div>
+
+                                {/* Selected Prints */}
+                                {item.selectedPrints && item.selectedPrints.length > 0 && (
+                                  <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
+                                      <Tag size={12} color="#888" />
+                                      <Text type="secondary" style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>Customizations</Text>
+                                    </div>
+                                    <Space wrap size={[8, 8]}>
+                                      {item.selectedPrints.map((p, i) => (
+                                        <AntTag key={i} color="default" style={{ margin: 0, backgroundColor: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)' }}>
+                                          {p.name} <Text type="secondary" style={{ marginLeft: '4px' }}>(+₹{p.cost})</Text>
+                                        </AntTag>
+                                      ))}
+                                    </Space>
+                                  </div>
                                 )}
                               </div>
-
-                              {/* Selected Prints */}
-                              {item.selectedPrints && item.selectedPrints.length > 0 && (
-                                <div className="mt-3 pt-3 border-t border-white/5">
-                                  <div className="flex items-center gap-1.5 mb-1.5">
-                                    <Tag className="w-3 h-3 text-gray-500" />
-                                    <span className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Customizations</span>
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {item.selectedPrints.map((p, i) => (
-                                      <span key={i} className="text-xs bg-white/5 text-gray-300 px-2 py-1 rounded border border-white/10">
-                                        {p.name} <span className="text-gray-500 ml-1">(+₹{p.cost})</span>
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="h-full flex flex-col items-center justify-center text-gray-500 py-12">
-                        <ShoppingBag className="w-12 h-12 mb-3 opacity-20" />
-                        <p>This customer hasn't purchased anything yet.</p>
-                      </div>
-                    )}
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',  padding: '48px 0' }}>
+                          <ShoppingBag size={48} style={{ marginBottom: '12px', opacity: 0.2 }} />
+                          <Text type="secondary">This customer hasn't purchased anything yet.</Text>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </div>
-
+                </Col>
+              </Row>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

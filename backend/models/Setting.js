@@ -20,7 +20,8 @@ const settingSchema = new mongoose.Schema({
     storeName: { type: String, default: 'Vybe' },
     supportEmail: { type: String, default: 'support@vybe.com' },
     announcement: { type: String, default: '' },
-    customPrintNotice: { type: String, default: '' }
+    customPrintNotice: { type: String, default: '' },
+    plainTshirtBasePrice: { type: Number, default: 499 }
   },
   customPrintColors: [{
     name: { type: String, required: true },

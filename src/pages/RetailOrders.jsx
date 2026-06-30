@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
-import GlassCard from '../components/common/GlassCard';
-import Button from '../components/common/Button';
-import { ShoppingCart, Eye, FileText, X, CheckCircle, Truck, Package, Clock, CreditCard, Search } from 'lucide-react';
 import { useUIStore } from '../store/useUIStore';
+import { ShoppingCart, Eye, FileText, Search, X } from 'lucide-react';
+import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal, Badge } from 'antd';
+
+const { Title, Text } = Typography;
 
 export default function RetailOrders() {
-  const { retailOrders, updateOrderDetails, fetchOrders } = useOrderStore();
+  const { retailOrders, fetchOrders, updateOrderDetails, isLoading } = useOrderStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const { alert } = useUIStore();
   const [searchQuery, setSearchQuery] = useState('');
@@ -34,11 +35,11 @@ export default function RetailOrders() {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Delivered': return 'text-green-400 bg-green-500/10 border-green-500/30';
-      case 'Processing': return 'text-blue-400 bg-blue-500/10 border-blue-500/30';
-      case 'Shipped': return 'text-purple-400 bg-purple-500/10 border-purple-500/30';
-      case 'Cancelled': return 'text-red-400 bg-red-500/10 border-red-500/30';
-      default: return 'text-gray-400 bg-gray-500/10 border-gray-500/30';
+      case 'Delivered': return 'success';
+      case 'Processing': return 'processing';
+      case 'Shipped': return 'purple';
+      case 'Cancelled': return 'error';
+      default: return 'default';
     }
   };
 
@@ -60,169 +61,188 @@ export default function RetailOrders() {
     return matchesId || matchesCustomer || matchesEmail;
   });
 
+  const columns = [
+    {
+      title: 'Order ID',
+      dataIndex: 'id',
+      key: 'id',
+      render: (text) => <Text strong className="text-white">{text.slice(-8).toUpperCase()}</Text>},
+    {
+      title: 'Date',
+      dataIndex: 'date',
+      key: 'date',
+      render: (text, record) => text || new Date(record.createdAt).toLocaleDateString()},
+    {
+      title: 'Customer',
+      dataIndex: 'customer',
+      key: 'customer'},
+    {
+      title: 'Payment',
+      dataIndex: 'paymentStatus',
+      key: 'paymentStatus',
+      render: (status) => (
+        <Tag color={status === 'Paid' ? 'success' : 'warning'}>
+          {status || 'Pending'}
+        </Tag>
+      )},
+    {
+      title: 'Total',
+      key: 'total',
+      render: (_, record) => {
+        const total = record.total || (record.itemsList ? record.itemsList.reduce((sum, item) => sum + (item.itemTotal || (item.price * item.qty)), 0) : 0);
+        return <Text strong style={{ color: '#a3ff12' }}>₹{total.toLocaleString()}</Text>;
+      }},
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={getStatusColor(status)}>
+          {status}
+        </Tag>
+      )},
+    {
+      title: 'Actions',
+      key: 'actions',
+      align: 'right',
+      render: (_, record) => (
+        <Button 
+          type="text" 
+          icon={<Eye size={16} />} 
+          onClick={() => setSelectedOrder(record)} 
+          
+        />
+      )},
+  ];
+
   return (
-    <div className="space-y-6 pb-12">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 className="text-2xl font-bold text-white mb-1">Retail Orders</h1>
-          <p className="text-sm text-gray-400">Manage individual consumer orders, payments, and shipping.</p>
+          <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Retail Orders</Title>
+          <Text type="secondary">Manage individual consumer orders, payments, and shipping.</Text>
         </div>
-        <div className="relative w-64">
-          <input
-            type="text"
-            placeholder="Search by ID or Name..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-vybe-dark border border-vybe-glassBorder rounded-lg px-4 py-2 pl-10 text-white focus:outline-none focus:border-vybe-neon transition-colors"
-          />
-          <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-        </div>
+        <Input 
+          prefix={<Search size={16}  />} 
+          placeholder="Search by ID or Name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ width: '256px'}}
+        />
       </div>
 
-      <GlassCard className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-gray-300">
-            <thead className="bg-vybe-dark text-xs uppercase text-gray-400 border-b border-vybe-glassBorder">
-              <tr>
-                <th className="px-6 py-4">Order ID</th>
-                <th className="px-6 py-4">Date</th>
-                <th className="px-6 py-4">Customer</th>
-                <th className="px-6 py-4">Payment</th>
-                <th className="px-6 py-4">Total</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="border-b border-vybe-glassBorder/50 hover:bg-vybe-glass/50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-white">{order.id.slice(-8).toUpperCase()}</td>
-                  <td className="px-6 py-4">{order.date || new Date(order.createdAt).toLocaleDateString()}</td>
-                  <td className="px-6 py-4">{order.customer}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium border ${order.paymentStatus === 'Paid' ? 'text-green-400 bg-green-500/10 border-green-500/30' : 'text-orange-400 bg-orange-500/10 border-orange-500/30'}`}>
-                      {order.paymentStatus || 'Pending'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 font-bold text-vybe-neon">
-                    ₹{order.total?.toLocaleString() || (order.itemsList ? order.itemsList.reduce((sum, item) => sum + (item.itemTotal || (item.price * item.qty)), 0) : 0).toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(order.status)}`}>
-                      {order.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => setSelectedOrder(order)}
-                      className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-vybe-glassBorder" 
-                      title="View Details"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {filteredOrders.length === 0 && (
-                <tr>
-                  <td colSpan="7" className="px-6 py-16 text-center">
-                    <div className="w-16 h-16 bg-vybe-dark rounded-full flex items-center justify-center mx-auto mb-4 border border-vybe-glassBorder">
-                      <ShoppingCart className="w-8 h-8 text-gray-500" />
-                    </div>
-                    <h3 className="text-lg font-bold text-white mb-2">No Retail Orders</h3>
-                    <p className="text-sm text-gray-400 max-w-sm mx-auto">When customers purchase items from your storefront, they will appear here for processing.</p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </GlassCard>
-
-      {/* Modern Order Details Modal */}
-      {selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="bg-[#1A1A1A] w-full max-w-4xl min-h-[80vh] border border-white/10 rounded-xl shadow-2xl relative flex flex-col my-8">
-            {/* Header */}
-            <div className="p-6 border-b border-white/10 flex justify-between items-start sticky top-0 bg-[#1A1A1A] z-10 rounded-t-xl">
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-2">Order #{selectedOrder.id.slice(-8).toUpperCase()}</h2>
-                <div className="flex gap-4 text-sm text-gray-400">
-                  <span>Placed on {selectedOrder.date}</span>
-                  <span>•</span>
-                  <span>{selectedOrder.items} Items</span>
-                  <span>•</span>
-                  <span className="font-semibold text-vybe-neon">Total: ₹{selectedOrder.total?.toLocaleString() || 0}</span>
-                </div>
+      <Card 
+        
+        bodyStyle={{ padding: 0 }}
+      >
+        <Table 
+          columns={columns} 
+          dataSource={filteredOrders} 
+          rowKey="id"
+          pagination={{ pageSize: 10 }}
+          loading={isLoading}
+          locale={{ 
+            emptyText: (
+              <div style={{ padding: '48px 0', textAlign: 'center' }}>
+                <Empty description="No Retail Orders" image={Empty.PRESENTED_IMAGE_SIMPLE} />
               </div>
-              <button onClick={() => setSelectedOrder(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-400 transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+            )
+          }}
+          scroll={{ x: 800 }}
+        />
+      </Card>
+
+      <Modal
+        title={
+          selectedOrder && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ fontSize: '20px' }}>Order #{selectedOrder.id.slice(-8).toUpperCase()}</span>
+              <Tag color="blue">Retail</Tag>
+            </div>
+          )
+        }
+        open={!!selectedOrder}
+        onCancel={() => setSelectedOrder(null)}
+        footer={[
+          <Button key="close" onClick={() => setSelectedOrder(null)} style={{ backgroundColor: 'transparent'}}>
+            Close
+          </Button>,
+          <Button key="invoice" type="primary" icon={<FileText size={16} />} style={{ fontWeight: 600, color: '#000' }}>
+            Download Invoice
+          </Button>
+        ]}
+        width={900}
+        styles={{ 
+          body: { maxHeight: '70vh', overflowY: 'auto', paddingRight: '8px' },
+          content: {  padding: '24px' },
+          header: {  borderBottom: '1px solid #333', paddingBottom: '16px', marginBottom: '24px' },
+          footer: { borderTop: '1px solid #333', paddingTop: '16px', marginTop: '24px' }}}
+        closeIcon={<X size={20} color="#888" />}
+      >
+        {selectedOrder && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ display: 'flex', gap: '16px',  fontSize: '14px', flexWrap: 'wrap' }}>
+              <span>Placed on {selectedOrder.date}</span>
+              <span>•</span>
+              <span>{selectedOrder.items} Items</span>
+              <span>•</span>
+              <span style={{ color: '#a3ff12', fontWeight: 600 }}>Total: ₹{selectedOrder.total?.toLocaleString() || 0}</span>
             </div>
 
-            <div className="p-6 flex-1 overflow-y-auto custom-scrollbar grid grid-cols-1 lg:grid-cols-3 gap-6">
-              
-              {/* Left Column: Timeline & Items */}
-              <div className="lg:col-span-2 space-y-6">
-                
-                {/* Items List */}
-                <div className="bg-black/20 rounded-lg border border-white/5 overflow-hidden">
-                  <div className="p-4 border-b border-white/5 bg-white/[0.02]">
-                    <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Ordered Items</h3>
-                  </div>
-                  <div className="divide-y divide-white/5">
+            <Row gutter={[24, 24]}>
+              <Col xs={24} lg={16}>
+                <Card 
+                  title="Ordered Items" 
+                  style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderColor: 'rgba(255,255,255,0.05)' }}
+                  styles={{ header: { borderBottom: '1px solid rgba(255,255,255,0.05)'}, body: { padding: 0 } }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
                     {selectedOrder.itemsList && selectedOrder.itemsList.map((item, idx) => (
-                      <div key={idx} className="p-4 flex gap-4">
-                        <div className="w-20 h-20 bg-neutral-900 rounded-md border border-white/10 overflow-hidden flex-shrink-0">
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <div key={idx} style={{ padding: '16px', borderBottom: idx < selectedOrder.itemsList.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none', display: 'flex', gap: '16px' }}>
+                        <div style={{ width: 80, height: 80, backgroundColor: '#111', borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', overflow: 'hidden', flexShrink: 0 }}>
+                          <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-start">
-                            <h4 className="font-semibold text-white truncate pr-4">{item.name}</h4>
-                            <span className="font-bold text-white">₹{item.price * item.qty}</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Text strong style={{  fontSize: 16 }}>{item.name}</Text>
+                            <Text strong >₹{item.price * item.qty}</Text>
                           </div>
-                          <p className="text-sm text-gray-400 mt-1">₹{item.price} × {item.qty}</p>
+                          <Text style={{  fontSize: 14 }}>₹{item.price} × {item.qty}</Text>
                           
-                          {/* Variants */}
                           {(item.selectedSize || item.selectedColor) && (
-                            <div className="flex gap-3 mt-2 text-xs text-gray-400">
-                              {item.selectedSize && <span className="bg-white/5 px-2 py-1 rounded">Size: {item.selectedSize}</span>}
-                              {item.selectedColor && <span className="bg-white/5 px-2 py-1 rounded flex items-center gap-1">Color: <span className="w-2 h-2 rounded-full inline-block border border-white/20" style={{backgroundColor: item.selectedColor.toLowerCase()}}></span>{item.selectedColor}</span>}
-                            </div>
+                            <Space style={{ marginTop: 8 }}>
+                              {item.selectedSize && <Tag style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#ccc' }}>Size: {item.selectedSize}</Tag>}
+                              {item.selectedColor && (
+                                <Tag style={{ background: 'rgba(255,255,255,0.05)', border: 'none', color: '#ccc', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                  Color: <span style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: item.selectedColor.toLowerCase(), border: '1px solid rgba(255,255,255,0.2)' }}></span>{item.selectedColor}
+                                </Tag>
+                              )}
+                            </Space>
                           )}
 
-                          {/* Custom Prints Detail */}
                           {item.selectedPrints && item.selectedPrints.length > 0 && (
-                            <div className="mt-3 bg-neutral-900/50 p-2.5 rounded border border-white/5">
-                              <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1">Print Configuration</p>
-                              <div className="flex flex-wrap gap-2">
+                            <div style={{ marginTop: 12, backgroundColor: 'rgba(0,0,0,0.3)', padding: 10, borderRadius: 4, border: '1px solid rgba(255,255,255,0.05)' }}>
+                              <Text style={{ fontSize: 10, textTransform: 'uppercase',  fontWeight: 600, display: 'block', marginBottom: 4 }}>Print Configuration</Text>
+                              <Space wrap>
                                 {item.selectedPrints.map((p, i) => (
-                                  <span key={i} className="text-xs bg-vybe-neon/10 text-vybe-neon px-2 py-1 rounded border border-vybe-neon/20">
+                                  <Tag key={i} color="lime" style={{ margin: 0, backgroundColor: 'rgba(163,255,18,0.1)', borderColor: 'rgba(163,255,18,0.2)', color: '#a3ff12' }}>
                                     {p.name} (+₹{p.cost})
-                                  </span>
+                                  </Tag>
                                 ))}
-                              </div>
+                              </Space>
                             </div>
                           )}
 
-                          {/* Uploaded Designs Gallery */}
                           {item.uploadedImages && Object.keys(item.uploadedImages).length > 0 && (
-                            <div className="mt-3">
-                              <p className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-2">Customer Designs</p>
-                              <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                            <div style={{ marginTop: 12 }}>
+                              <Text style={{ fontSize: 10, textTransform: 'uppercase',  fontWeight: 600, display: 'block', marginBottom: 8 }}>Customer Designs</Text>
+                              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
                                 {Object.entries(item.uploadedImages).map(([zone, url]) => (
-                                  <a key={zone} href={url} target="_blank" rel="noreferrer" className="block relative group flex-shrink-0">
-                                    <div className="w-16 h-16 bg-neutral-900 border border-white/10 rounded overflow-hidden relative group-hover:border-vybe-neon transition-colors">
-                                      <img src={url} alt={zone} className="w-full h-full object-cover group-hover:opacity-30 transition-all" />
-                                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span className="bg-vybe-neon text-black text-[8px] font-bold px-1.5 py-0.5 rounded uppercase flex items-center gap-1">
-                                          <Eye className="w-2 h-2" /> Open
-                                        </span>
-                                      </div>
+                                  <a key={zone} href={url} target="_blank" rel="noreferrer" style={{ display: 'block', position: 'relative', flexShrink: 0 }}>
+                                    <div style={{ width: 64, height: 64, backgroundColor: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, overflow: 'hidden' }}>
+                                      <img src={url} alt={zone} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     </div>
-                                    <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 translate-y-full opacity-0 group-hover:opacity-100 bg-black text-white text-[10px] px-2 py-1 rounded whitespace-nowrap transition-opacity z-10">
-                                      {zone}
-                                    </span>
+                                    <div style={{ textAlign: 'center', marginTop: 4, fontSize: 10, color: '#ccc' }}>{zone}</div>
                                   </a>
                                 ))}
                               </div>
@@ -232,46 +252,40 @@ export default function RetailOrders() {
                       </div>
                     ))}
                   </div>
-                </div>
-              </div>
-
-              {/* Right Column: Customer, Payment, Shipping */}
-              <div className="space-y-6">
-                
-                {/* Customer Info */}
-                <div className="bg-black/20 p-5 rounded-lg border border-white/5">
-                  <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Customer Details</h3>
-                  <div className="space-y-3 text-sm">
+                </Card>
+              </Col>
+              
+              <Col xs={24} lg={8}>
+                <Card 
+                  title="Customer Details" 
+                  style={{ backgroundColor: 'rgba(0,0,0,0.2)', borderColor: 'rgba(255,255,255,0.05)' }}
+                  styles={{ header: { borderBottom: '1px solid rgba(255,255,255,0.05)'}, body: { padding: '20px' } }}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                      <p className="text-gray-500 text-xs mb-0.5">Name</p>
-                      <p className="font-medium text-white">{selectedOrder.customer}</p>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Name</Text>
+                      <Text strong >{selectedOrder.customer}</Text>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs mb-0.5">Email</p>
-                      <p className="font-medium text-white">{selectedOrder.email}</p>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Email</Text>
+                      <Text strong >{selectedOrder.email}</Text>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs mb-0.5">Phone</p>
-                      <p className="font-medium text-white">{selectedOrder.phone}</p>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Phone</Text>
+                      <Text strong >{selectedOrder.phone}</Text>
                     </div>
                     <div>
-                      <p className="text-gray-500 text-xs mb-0.5">Shipping Address</p>
-                      <p className="font-medium text-white">{selectedOrder.shippingAddress || 'N/A'}</p>
+                      <Text type="secondary" style={{ fontSize: 12, display: 'block' }}>Shipping Address</Text>
+                      <Text strong >{selectedOrder.shippingAddress || 'N/A'}</Text>
                     </div>
                   </div>
-                </div>
-
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t border-white/10 bg-black/40 flex justify-end gap-3 rounded-b-xl">
-              <Button variant="secondary" onClick={() => setSelectedOrder(null)}>Close</Button>
-              <Button variant="primary"><FileText className="w-4 h-4 mr-2" /> Download Invoice</Button>
-            </div>
+                </Card>
+              </Col>
+            </Row>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }
+
