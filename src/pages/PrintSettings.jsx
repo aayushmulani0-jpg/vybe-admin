@@ -12,7 +12,7 @@ const { Title, Text } = Typography;
 export default function PrintSettings() {
   const { printLocations, fetchPrintLocations, updateLocation, loading: printLoading } = usePrintSettingsStore();
   const { settings, fetchSettings, updateSettings } = useSettingsStore();
-  const [activeTab, setActiveTab] = useState('areas'); 
+  const [activeTab, setActiveTab] = useState('areas');
   const { alert, confirm } = useUIStore();
 
   const [localLocations, setLocalLocations] = useState([]);
@@ -26,8 +26,8 @@ export default function PrintSettings() {
   const [currentTemplate, setCurrentTemplate] = useState({
     name: '', description: '', price: 0, printAreas: [], isActive: true, isRecommended: false, isPopular: false
   });
-  
-  const token = localStorage.getItem('vybe-admin-token'); 
+
+  const token = localStorage.getItem('vybe-admin-token');
 
   useEffect(() => {
     fetchPrintLocations();
@@ -37,7 +37,7 @@ export default function PrintSettings() {
 
   useEffect(() => {
     if (printLocations) {
-      setLocalLocations(JSON.parse(JSON.stringify(printLocations))); 
+      setLocalLocations(JSON.parse(JSON.stringify(printLocations)));
     }
   }, [printLocations]);
 
@@ -76,15 +76,15 @@ export default function PrintSettings() {
   const handleSaveAreaModal = async () => {
     if (!currentArea.name.trim()) return alert('Please enter a zone name.', 'error', 'Error');
     if (currentArea._id) {
-       await usePrintSettingsStore.getState().updateLocation(currentArea._id, currentArea);
-       alert('Print area updated successfully.', 'success', 'Updated');
+      await usePrintSettingsStore.getState().updateLocation(currentArea._id, currentArea);
+      alert('Print area updated successfully.', 'success', 'Updated');
     } else {
-       const success = await usePrintSettingsStore.getState().addLocation(currentArea);
-       if (success) {
-         alert('Print area added successfully.', 'success', 'Added');
-       } else {
-         alert('Failed to add print area.', 'error', 'Error');
-       }
+      const success = await usePrintSettingsStore.getState().addLocation(currentArea);
+      if (success) {
+        alert('Print area added successfully.', 'success', 'Added');
+      } else {
+        alert('Failed to add print area.', 'error', 'Error');
+      }
     }
     setIsAreaModalOpen(false);
     fetchPrintLocations();
@@ -107,16 +107,16 @@ export default function PrintSettings() {
     try {
       const method = currentTemplate._id ? 'PUT' : 'POST';
       const url = currentTemplate._id ? `${API_URL}/templates/${currentTemplate._id}` : `${API_URL}/templates`;
-      
+
       const res = await fetch(url, {
         method,
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify(currentTemplate)
       });
-      
+
       if (res.ok) {
         fetchTemplates();
         setIsEditingTemplate(false);
@@ -162,7 +162,7 @@ export default function PrintSettings() {
 
   // --- Colors Logic ---
   const [newColor, setNewColor] = useState({ name: '', hex: '#ffffff' });
-  
+
   const handleAddColor = async () => {
     if (!newColor.name || !newColor.hex) return;
     const updatedColors = [...(settings?.customPrintColors || []), { ...newColor, isActive: true }];
@@ -202,47 +202,49 @@ export default function PrintSettings() {
         <Tag color={record.isActive ? 'success' : 'error'}>
           {record.isActive ? 'Active' : 'Disabled'}
         </Tag>
-      )},
+      )
+    },
     {
       title: 'Actions',
       key: 'actions',
       align: 'right',
       render: (_, record) => (
         <Space size="small">
-          <Button 
-            type="text" 
-            icon={<Edit2 size={16} />} 
-            onClick={() => openAreaModal(record)} 
+          <Button
+            type="text"
+            icon={<Edit2 size={16} />}
+            onClick={() => openAreaModal(record)}
             style={{ color: '#a3ff12' }}
           />
-          <Button 
-            type="text" 
-            icon={<Power size={16} />} 
-            onClick={() => handleToggleArea(record._id, record.isActive)} 
+          <Button
+            type="text"
+            icon={<Power size={16} />}
+            onClick={() => handleToggleArea(record._id, record.isActive)}
             style={{ color: record.isActive ? '#faad14' : '#52c41a' }}
             title={record.isActive ? 'Disable Location' : 'Enable Location'}
           />
-          <Button 
-            type="text" 
-            danger 
-            icon={<Trash2 size={16} />} 
-            onClick={() => handleDeleteArea(record._id)} 
+          <Button
+            type="text"
+            danger
+            icon={<Trash2 size={16} />}
+            onClick={() => handleDeleteArea(record._id)}
           />
         </Space>
-      )},
+      )
+    },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', paddingBottom: '48px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <Title level={4} style={{  margin: 0, marginBottom: '4px' }}>Print Management</Title>
+          <Title level={4} style={{ margin: 0, marginBottom: '4px' }}>Print Management</Title>
           <Text type="secondary">Configure print zones, pricing, and preset templates.</Text>
         </div>
       </div>
 
-      <Tabs 
-        activeKey={activeTab} 
+      <Tabs
+        activeKey={activeTab}
         onChange={setActiveTab}
         items={[
           {
@@ -262,7 +264,7 @@ export default function PrintSettings() {
                   <Row gutter={16} align="bottom">
                     <Col xs={24} sm={12}>
                       <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Base Price (₹)</Text>
-                      <Input 
+                      <Input
                         type="number"
                         prefix="₹"
                         value={localBasePrice}
@@ -297,20 +299,20 @@ export default function PrintSettings() {
             children: (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Title level={5} style={{  margin: 0 }}>Manage Existing Areas</Title>
+                  <Title level={5} style={{ margin: 0 }}>Manage Existing Areas</Title>
                   <Button type="primary" onClick={() => openAreaModal()} icon={<Plus size={16} />} style={{ fontWeight: 600, color: '#000' }}>
                     Add Print Area
                   </Button>
                 </div>
 
                 <Card bodyStyle={{ padding: 0 }} >
-                  <Table 
-                    columns={areasColumns} 
-                    dataSource={localLocations} 
+                  <Table
+                    columns={areasColumns}
+                    dataSource={localLocations}
                     rowKey="_id"
                     loading={printLoading}
                     pagination={false}
-                    locale={{ 
+                    locale={{
                       emptyText: (
                         <div style={{ padding: '48px 0', textAlign: 'center' }}>
                           <Empty description="No Print Areas Configured" image={Empty.PRESENTED_IMAGE_SIMPLE} />
@@ -320,7 +322,8 @@ export default function PrintSettings() {
                   />
                 </Card>
               </div>
-            )},
+            )
+          },
           {
             key: 'templates',
             label: (
@@ -355,40 +358,40 @@ export default function PrintSettings() {
                           </Col>
                         ) : (
                           templates.map(template => (
-                          <Col xs={24} md={12} key={template._id}>
-                            <Card 
-                              style={{   position: 'relative' }}
-                              hoverable
-                              bodyStyle={{ padding: '24px' }}
-                            >
-                              <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px' }}>
-                                <Button type="text" icon={<Edit2 size={16} />} onClick={() => { setCurrentTemplate(template); setIsEditingTemplate(true); }} style={{ color: '#a3ff12' }} />
-                                <Button type="text" danger icon={<Trash2 size={16} />} onClick={() => handleDeleteTemplate(template._id)} />
-                              </div>
-                              
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                <Title level={5} style={{  margin: 0 }}>{template.name}</Title>
-                                {!template.isActive && <Tag color="error">Inactive</Tag>}
-                              </div>
-                              <Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>{template.description || 'No description'}</Text>
-                              
-                              <Space style={{ marginBottom: '24px', flexWrap: 'wrap' }}>
-                                <Tag color="default" >Price: ₹{template.price}</Tag>
-                                {template.isRecommended && <Tag color="lime" icon={<Star size={12} />}>Recommended</Tag>}
-                                {template.isPopular && <Tag color="orange" icon={<Star size={12} />}>Popular</Tag>}
-                              </Space>
+                            <Col xs={24} md={12} key={template._id}>
+                              <Card
+                                style={{ position: 'relative' }}
+                                hoverable
+                                bodyStyle={{ padding: '24px' }}
+                              >
+                                <div style={{ position: 'absolute', top: '16px', right: '16px', display: 'flex', gap: '8px' }}>
+                                  <Button type="text" icon={<Edit2 size={16} />} onClick={() => { setCurrentTemplate(template); setIsEditingTemplate(true); }} style={{ color: '#a3ff12' }} />
+                                  <Button type="text" danger icon={<Trash2 size={16} />} onClick={() => handleDeleteTemplate(template._id)} />
+                                </div>
 
-                              <div>
-                                <Text style={{  fontSize: '12px', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Included Areas</Text>
-                                <Space wrap>
-                                  {template.printAreas.map(p => (
-                                    <Tag key={p.name} color="default" style={{   margin: 0 }}>{p.name}</Tag>
-                                  ))}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                  <Title level={5} style={{ margin: 0 }}>{template.name}</Title>
+                                  {!template.isActive && <Tag color="error">Inactive</Tag>}
+                                </div>
+                                <Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>{template.description || 'No description'}</Text>
+
+                                <Space style={{ marginBottom: '24px', flexWrap: 'wrap' }}>
+                                  <Tag color="default" >Price: ₹{template.price}</Tag>
+                                  {template.isRecommended && <Tag color="lime" icon={<Star size={12} />}>Recommended</Tag>}
+                                  {template.isPopular && <Tag color="orange" icon={<Star size={12} />}>Popular</Tag>}
                                 </Space>
-                              </div>
-                            </Card>
-                          </Col>
-                        ))
+
+                                <div>
+                                  <Text style={{ fontSize: '12px', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Included Areas</Text>
+                                  <Space wrap>
+                                    {template.printAreas.map(p => (
+                                      <Tag key={p.name} color="default" style={{ margin: 0 }}>{p.name}</Tag>
+                                    ))}
+                                  </Space>
+                                </div>
+                              </Card>
+                            </Col>
+                          ))
                         )}
                       </Row>
                     )}
@@ -396,42 +399,42 @@ export default function PrintSettings() {
                 ) : (
                   <Card >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #333', paddingBottom: '16px' }}>
-                      <Title level={4} style={{  margin: 0 }}>{currentTemplate._id ? 'Edit Template' : 'Create Template'}</Title>
-                      <Button type="text" icon={<X size={20} />} onClick={() => setIsEditingTemplate(false)}  />
+                      <Title level={4} style={{ margin: 0 }}>{currentTemplate._id ? 'Edit Template' : 'Create Template'}</Title>
+                      <Button type="text" icon={<X size={20} />} onClick={() => setIsEditingTemplate(false)} />
                     </div>
-                    
+
                     <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
                       <Col xs={24} md={12}>
-                        <Text style={{  display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Template Name</Text>
-                        <Input 
-                          value={currentTemplate.name} 
-                          onChange={e => setCurrentTemplate({...currentTemplate, name: e.target.value})}
+                        <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Template Name</Text>
+                        <Input
+                          value={currentTemplate.name}
+                          onChange={e => setCurrentTemplate({ ...currentTemplate, name: e.target.value })}
                           placeholder="e.g. Streetwear Combo"
-                          
+
                         />
                       </Col>
                       <Col xs={24} md={12}>
-                        <Text style={{  display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Template Override Price (₹)</Text>
-                        <Input 
-                          type="number" 
-                          value={currentTemplate.price} 
-                          onChange={e => setCurrentTemplate({...currentTemplate, price: Number(e.target.value)})}
-                          
+                        <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Template Override Price (₹)</Text>
+                        <Input
+                          type="number"
+                          value={currentTemplate.price}
+                          onChange={e => setCurrentTemplate({ ...currentTemplate, price: Number(e.target.value) })}
+
                         />
                       </Col>
                       <Col span={24}>
-                        <Text style={{  display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Description</Text>
-                        <Input 
-                          value={currentTemplate.description} 
-                          onChange={e => setCurrentTemplate({...currentTemplate, description: e.target.value})}
+                        <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Description</Text>
+                        <Input
+                          value={currentTemplate.description}
+                          onChange={e => setCurrentTemplate({ ...currentTemplate, description: e.target.value })}
                           placeholder="e.g. Chest Design + Large Back"
-                          
+
                         />
                       </Col>
                     </Row>
 
                     <div style={{ marginBottom: '32px' }}>
-                      <Text style={{  display: 'block', marginBottom: '16px', fontSize: '12px', textTransform: 'uppercase' }}>Select Included Print Areas</Text>
+                      <Text style={{ display: 'block', marginBottom: '16px', fontSize: '12px', textTransform: 'uppercase' }}>Select Included Print Areas</Text>
                       <Space wrap>
                         {printLocations.map(area => {
                           const isSelected = currentTemplate.printAreas.some(p => p.name === area.name);
@@ -439,8 +442,8 @@ export default function PrintSettings() {
                             <Button
                               key={area._id}
                               onClick={() => togglePrintAreaInTemplate(area.name)}
-                              style={{ 
-                                backgroundColor: isSelected ? 'rgba(163, 255, 18, 0.1)' : '#1a1a1a', 
+                              style={{
+                                backgroundColor: isSelected ? 'rgba(163, 255, 18, 0.1)' : '#1a1a1a',
                                 borderColor: isSelected ? '#a3ff12' : '#333',
                                 color: isSelected ? '#a3ff12' : '#fff'
                               }}
@@ -454,34 +457,35 @@ export default function PrintSettings() {
                     </div>
 
                     <div style={{ display: 'flex', gap: '24px', marginBottom: '32px', borderTop: '1px solid #333', paddingTop: '24px' }}>
-                      <Checkbox 
-                        checked={currentTemplate.isActive} 
-                        onChange={e => setCurrentTemplate({...currentTemplate, isActive: e.target.checked})}
+                      <Checkbox
+                        checked={currentTemplate.isActive}
+                        onChange={e => setCurrentTemplate({ ...currentTemplate, isActive: e.target.checked })}
                       >
                         <Text >Active (Visible to users)</Text>
                       </Checkbox>
-                      <Checkbox 
-                        checked={currentTemplate.isRecommended} 
-                        onChange={e => setCurrentTemplate({...currentTemplate, isRecommended: e.target.checked})}
+                      <Checkbox
+                        checked={currentTemplate.isRecommended}
+                        onChange={e => setCurrentTemplate({ ...currentTemplate, isRecommended: e.target.checked })}
                       >
                         <Text >Mark as Recommended</Text>
                       </Checkbox>
-                      <Checkbox 
-                        checked={currentTemplate.isPopular} 
-                        onChange={e => setCurrentTemplate({...currentTemplate, isPopular: e.target.checked})}
+                      <Checkbox
+                        checked={currentTemplate.isPopular}
+                        onChange={e => setCurrentTemplate({ ...currentTemplate, isPopular: e.target.checked })}
                       >
                         <Text >Mark as Popular</Text>
                       </Checkbox>
                     </div>
 
                     <div style={{ display: 'flex', justifyItems: 'flex-end', gap: '12px' }}>
-                      <Button onClick={() => setIsEditingTemplate(false)} style={{ backgroundColor: 'transparent'}}>Cancel</Button>
+                      <Button onClick={() => setIsEditingTemplate(false)} style={{ backgroundColor: 'transparent' }}>Cancel</Button>
                       <Button type="primary" onClick={handleSaveTemplate} icon={<Save size={16} />} style={{ fontWeight: 600, color: '#000' }}>Save Template</Button>
                     </div>
                   </Card>
                 )}
               </div>
-            )},
+            )
+          },
           {
             key: 'colors',
             label: (
@@ -492,31 +496,31 @@ export default function PrintSettings() {
             children: (
               <div style={{ marginTop: '16px' }}>
                 <Card >
-                  <Title level={5} style={{  marginBottom: '24px' }}>Available T-Shirt Colors</Title>
-                  
+                  <Title level={5} style={{ marginBottom: '24px' }}>Available T-Shirt Colors</Title>
+
                   <Row gutter={16} align="bottom" style={{ marginBottom: '32px', borderBottom: '1px solid #333', paddingBottom: '32px' }}>
                     <Col xs={24} sm={12}>
-                      <Text style={{  display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Color Name</Text>
-                      <Input 
-                        value={newColor.name} 
-                        onChange={e => setNewColor({...newColor, name: e.target.value})}
+                      <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Color Name</Text>
+                      <Input
+                        value={newColor.name}
+                        onChange={e => setNewColor({ ...newColor, name: e.target.value })}
                         placeholder="e.g. Vintage Black"
-                        
+
                       />
                     </Col>
                     <Col xs={24} sm={6}>
-                      <Text style={{  display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Hex Value</Text>
+                      <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Hex Value</Text>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <input 
-                          type="color" 
-                          value={newColor.hex} 
-                          onChange={e => setNewColor({...newColor, hex: e.target.value})}
+                        <input
+                          type="color"
+                          value={newColor.hex}
+                          onChange={e => setNewColor({ ...newColor, hex: e.target.value })}
                           style={{ width: '32px', height: '32px', padding: 0, border: 'none', cursor: 'pointer', background: 'transparent' }}
                         />
-                        <Input 
-                          value={newColor.hex} 
-                          onChange={e => setNewColor({...newColor, hex: e.target.value})}
-                          style={{    textTransform: 'uppercase' }}
+                        <Input
+                          value={newColor.hex}
+                          onChange={e => setNewColor({ ...newColor, hex: e.target.value })}
+                          style={{ textTransform: 'uppercase' }}
                         />
                       </div>
                     </Col>
@@ -530,40 +534,40 @@ export default function PrintSettings() {
                   <Row gutter={[16, 16]}>
                     {(settings?.customPrintColors || []).map((color, idx) => (
                       <Col xs={12} sm={8} md={6} lg={4} key={idx}>
-                        <div style={{ 
-                           
-                          border: '1px solid #333', 
-                          borderRadius: '8px', 
-                          padding: '16px', 
-                          display: 'flex', 
-                          flexDirection: 'column', 
+                        <div style={{
+
+                          border: '1px solid #333',
+                          borderRadius: '8px',
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
                           alignItems: 'center',
                           position: 'relative',
                           overflow: 'hidden'
                         }}>
-                          <Button 
-                            type="text" 
-                            danger 
-                            icon={<X size={12} />} 
+                          <Button
+                            type="text"
+                            danger
+                            icon={<X size={12} />}
                             onClick={() => handleRemoveColor(idx)}
                             style={{ position: 'absolute', top: 4, right: 4, padding: 4, width: '24px', height: '24px' }}
                           />
-                          <div style={{ 
-                            width: '48px', 
-                            height: '48px', 
-                            borderRadius: '50%', 
-                            backgroundColor: color.hex, 
+                          <div style={{
+                            width: '48px',
+                            height: '48px',
+                            borderRadius: '50%',
+                            backgroundColor: color.hex,
                             border: '1px solid rgba(255,255,255,0.2)',
                             marginBottom: '12px'
                           }} />
-                          <Text strong style={{  textAlign: 'center', width: '100%' }} ellipsis>{color.name}</Text>
+                          <Text strong style={{ textAlign: 'center', width: '100%' }} ellipsis>{color.name}</Text>
                           <Text type="secondary" style={{ fontSize: '10px', textTransform: 'uppercase' }}>{color.hex}</Text>
                         </div>
                       </Col>
                     ))}
                     {(!settings?.customPrintColors || settings.customPrintColors.length === 0) && (
                       <Col span={24}>
-                        <div style={{ textAlign: 'center',  padding: '48px 0' }}>
+                        <div style={{ textAlign: 'center', padding: '48px 0' }}>
                           <Empty description="No Colors Published Yet. Add one above." image={Empty.PRESENTED_IMAGE_SIMPLE} />
                         </div>
                       </Col>
@@ -571,7 +575,8 @@ export default function PrintSettings() {
                   </Row>
                 </Card>
               </div>
-            )},
+            )
+          },
         ]}
       />
 
@@ -591,36 +596,36 @@ export default function PrintSettings() {
           <Row gutter={16}>
             <Col span={16}>
               <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Zone Name</Text>
-              <Input 
-                value={currentArea.name} 
-                onChange={e => setCurrentArea({...currentArea, name: e.target.value})}
+              <Input
+                value={currentArea.name}
+                onChange={e => setCurrentArea({ ...currentArea, name: e.target.value })}
                 placeholder="e.g. Center Chest"
               />
             </Col>
             <Col span={8}>
               <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Price (₹)</Text>
-              <Input 
-                type="number" 
-                value={currentArea.cost} 
-                onChange={e => setCurrentArea({...currentArea, cost: Number(e.target.value)})}
+              <Input
+                type="number"
+                value={currentArea.cost}
+                onChange={e => setCurrentArea({ ...currentArea, cost: Number(e.target.value) })}
               />
             </Col>
           </Row>
 
-          <Checkbox 
-            checked={currentArea.isActive} 
-            onChange={e => setCurrentArea({...currentArea, isActive: e.target.checked})}
+          <Checkbox
+            checked={currentArea.isActive}
+            onChange={e => setCurrentArea({ ...currentArea, isActive: e.target.checked })}
           >
             <Text>Active (Visible to users)</Text>
           </Checkbox>
 
-          <PrintAreaSelector 
+          <PrintAreaSelector
             value={currentArea.boundingBox}
             onChange={(boundingBox) => setCurrentArea({ ...currentArea, boundingBox })}
           />
         </div>
       </Modal>
-      
+
     </div>
   );
 }

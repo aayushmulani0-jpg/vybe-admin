@@ -4,7 +4,7 @@ import { Typography } from 'antd';
 const { Text } = Typography;
 
 // Mock T-Shirt Image URL (Plain Black)
-const TSHIRT_MOCKUP = "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800"; 
+const TSHIRT_MOCKUP = "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800";
 
 export default function PrintAreaSelector({ value, onChange }) {
   const containerRef = useRef(null);
@@ -16,7 +16,7 @@ export default function PrintAreaSelector({ value, onChange }) {
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
-    
+
     setStartPos({ x, y });
     setIsDrawing(true);
     onChange({ top: y, left: x, width: 0, height: 0 });
@@ -27,7 +27,7 @@ export default function PrintAreaSelector({ value, onChange }) {
     const rect = containerRef.current.getBoundingClientRect();
     const currentX = ((e.clientX - rect.left) / rect.width) * 100;
     const currentY = ((e.clientY - rect.top) / rect.height) * 100;
-    
+
     // Clamp to 0-100%
     const clampedX = Math.max(0, Math.min(100, currentX));
     const clampedY = Math.max(0, Math.min(100, currentY));
@@ -45,12 +45,12 @@ export default function PrintAreaSelector({ value, onChange }) {
     setIsDrawing(false);
     // Ensure minimum size so it doesn't disappear on click
     if (value && (value.width < 2 || value.height < 2)) {
-       onChange({
-         top: value.top,
-         left: value.left,
-         width: Math.max(value.width, 10),
-         height: Math.max(value.height, 10)
-       });
+      onChange({
+        top: value.top,
+        left: value.left,
+        width: Math.max(value.width, 10),
+        height: Math.max(value.height, 10)
+      });
     }
   };
 
@@ -64,16 +64,16 @@ export default function PrintAreaSelector({ value, onChange }) {
       <Text type="secondary" style={{ fontSize: '13px' }}>
         Click and drag on the t-shirt to define the printing area bounds.
       </Text>
-      
-      <div 
+
+      <div
         ref={containerRef}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
-        style={{ 
-          position: 'relative', 
-          width: '100%', 
-          maxWidth: '400px', 
-          margin: '0 auto', 
+        style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '400px',
+          margin: '0 auto',
           cursor: 'crosshair',
           border: '1px solid #333',
           borderRadius: '8px',
@@ -82,15 +82,15 @@ export default function PrintAreaSelector({ value, onChange }) {
         }}
         draggable={false}
       >
-        <img 
-          src={TSHIRT_MOCKUP} 
-          alt="T-Shirt Mockup" 
+        <img
+          src={TSHIRT_MOCKUP}
+          alt="T-Shirt Mockup"
           style={{ width: '100%', height: 'auto', display: 'block', pointerEvents: 'none', userSelect: 'none' }}
           draggable={false}
         />
 
         {value && value.width > 0 && value.height > 0 && (
-          <div 
+          <div
             style={{
               position: 'absolute',
               top: `${value.top}%`,
