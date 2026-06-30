@@ -5,6 +5,7 @@ import { MapPin, Power, Save, Layers, Edit2, Trash2, Plus, X, Check, Star, Dolla
 import { API_URL } from '../config';
 import { useUIStore } from '../store/useUIStore';
 import { Card, Table, Button, Typography, Input, Checkbox, Tabs, Modal, Spin, Tag, Row, Col, Space, Empty } from 'antd';
+import PrintAreaSelector from '../components/custom-print/PrintAreaSelector';
 
 const { Title, Text } = Typography;
 
@@ -15,8 +16,8 @@ export default function PrintSettings() {
   const { alert, confirm } = useUIStore();
 
   const [localLocations, setLocalLocations] = useState([]);
-  const [isSavingAreas, setIsSavingAreas] = useState(false);
-  const [newArea, setNewArea] = useState({ name: '', cost: 0, isActive: true });
+  const [isAreaModalOpen, setIsAreaModalOpen] = useState(false);
+  const [currentArea, setCurrentArea] = useState({ name: '', cost: 0, isActive: true, boundingBox: { top: 30, left: 40, width: 20, height: 20 } });
   const [localBasePrice, setLocalBasePrice] = useState(0);
 
   const [templates, setTemplates] = useState([]);
@@ -58,34 +59,35 @@ export default function PrintSettings() {
     }
   };
 
-  const handleToggleArea = (id) => {
-    setLocalLocations(prev => prev.map(loc => 
-      loc._id === id ? { ...loc, isActive: !loc.isActive } : loc
-    ));
+  const handleToggleArea = async (id, currentStatus) => {
+    await usePrintSettingsStore.getState().updateLocation(id, { isActive: !currentStatus });
+    fetchPrintLocations();
   };
 
-  const handlePriceChangeArea = (id, newPrice) => {
-    setLocalLocations(prev => prev.map(loc => 
-      loc._id === id ? { ...loc, cost: Number(newPrice) } : loc
-    ));
-  };
-
-  const handleNameChangeArea = (id, newName) => {
-    setLocalLocations(prev => prev.map(loc => 
-      loc._id === id ? { ...loc, name: newName } : loc
-    ));
-  };
-
-  const handleAddArea = async () => {
-    if (!newArea.name.trim()) return alert('Please enter a zone name.', 'error', 'Error');
-    const success = await usePrintSettingsStore.getState().addLocation(newArea);
-    if (success) {
-      setNewArea({ name: '', cost: 0, isActive: true });
-      alert('Print area added successfully.', 'success', 'Added');
-      fetchPrintLocations();
+  const openAreaModal = (area = null) => {
+    if (area) {
+      setCurrentArea(area);
     } else {
-      alert('Failed to add print area.', 'error', 'Error');
+      setCurrentArea({ name: '', cost: 0, isActive: true, boundingBox: { top: 30, left: 40, width: 20, height: 20 } });
     }
+    setIsAreaModalOpen(true);
+  };
+
+  const handleSaveAreaModal = async () => {
+    if (!currentArea.name.trim()) return alert('Please enter a zone name.', 'error', 'Error');
+    if (currentArea._id) {
+       await usePrintSettingsStore.getState().updateLocation(currentArea._id, currentArea);
+       alert('Print area updated successfully.', 'success', 'Updated');
+    } else {
+       const success = await usePrintSettingsStore.getState().addLocation(currentArea);
+       if (success) {
+         alert('Print area added successfully.', 'success', 'Added');
+       } else {
+         alert('Failed to add print area.', 'error', 'Error');
+       }
+    }
+    setIsAreaModalOpen(false);
+    fetchPrintLocations();
   };
 
   const handleDeleteArea = (id) => {
@@ -98,20 +100,6 @@ export default function PrintSettings() {
         fetchPrintLocations();
       }
     });
-  };
-
-  const handleSaveAreas = async () => {
-    setIsSavingAreas(true);
-    try {
-      const promises = localLocations.map(loc => usePrintSettingsStore.getState().updateLocation(loc._id, { name: loc.name, cost: loc.cost, isActive: loc.isActive }));
-      await Promise.all(promises);
-      await fetchPrintLocations();
-      alert('Print settings saved successfully!', 'success', 'Success');
-    } catch (error) {
-      console.error('Error saving print settings:', error);
-      alert('Failed to save settings.', 'error', 'Error');
-    }
-    setIsSavingAreas(false);
   };
 
   // --- Templates Logic ---
@@ -199,26 +187,14 @@ export default function PrintSettings() {
       title: 'Zone Name',
       dataIndex: 'name',
       key: 'name',
-      render: (text, record) => (
-        <Input 
-          value={text}
-          onChange={(e) => handleNameChangeArea(record._id, e.target.value)}
-          style={{ backgroundColor: 'transparent',   border: 'none', borderBottom: '1px solid #333' }}
-        />
-      )},
+      render: (text) => <Text strong>{text}</Text>
+    },
     {
       title: 'Price (₹)',
       dataIndex: 'cost',
       key: 'cost',
-      render: (text, record) => (
-        <Input 
-          type="number"
-          value={text}
-          prefix="₹"
-          onChange={(e) => handlePriceChangeArea(record._id, e.target.value)}
-          style={{ backgroundColor: 'transparent',   border: 'none', borderBottom: '1px solid #333', width: '120px' }}
-        />
-      )},
+      render: (text) => <Text>₹{text}</Text>
+    },
     {
       title: 'Status',
       key: 'status',
@@ -235,8 +211,14 @@ export default function PrintSettings() {
         <Space size="small">
           <Button 
             type="text" 
+            icon={<Edit2 size={16} />} 
+            onClick={() => openAreaModal(record)} 
+            style={{ color: '#a3ff12' }}
+          />
+          <Button 
+            type="text" 
             icon={<Power size={16} />} 
-            onClick={() => handleToggleArea(record._id)} 
+            onClick={() => handleToggleArea(record._id, record.isActive)} 
             style={{ color: record.isActive ? '#faad14' : '#52c41a' }}
             title={record.isActive ? 'Disable Location' : 'Enable Location'}
           />
@@ -314,39 +296,10 @@ export default function PrintSettings() {
             ),
             children: (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
-                <Card >
-                  <Title level={5} style={{  marginBottom: '16px' }}>Add New Print Area</Title>
-                  <Row gutter={16} align="bottom">
-                    <Col xs={24} sm={12}>
-                      <Text style={{  display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Zone Name</Text>
-                      <Input 
-                        value={newArea.name} 
-                        onChange={e => setNewArea({...newArea, name: e.target.value})}
-                        placeholder="e.g. Center Chest"
-                        
-                      />
-                    </Col>
-                    <Col xs={24} sm={6}>
-                      <Text style={{  display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Price (₹)</Text>
-                      <Input 
-                        type="number" 
-                        value={newArea.cost} 
-                        onChange={e => setNewArea({...newArea, cost: Number(e.target.value)})}
-                        
-                      />
-                    </Col>
-                    <Col xs={24} sm={6}>
-                      <Button type="primary" onClick={handleAddArea} icon={<Plus size={16} />} style={{ width: '100%', fontWeight: 600, color: '#000' }}>
-                        Add Area
-                      </Button>
-                    </Col>
-                  </Row>
-                </Card>
-
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Title level={5} style={{  margin: 0 }}>Manage Existing Areas</Title>
-                  <Button type="primary" onClick={handleSaveAreas} disabled={isSavingAreas || printLoading} icon={<Save size={16} />} style={{ fontWeight: 600, color: '#000' }}>
-                    {isSavingAreas ? 'Saving...' : 'Save Changes'}
+                  <Button type="primary" onClick={() => openAreaModal()} icon={<Plus size={16} />} style={{ fontWeight: 600, color: '#000' }}>
+                    Add Print Area
                   </Button>
                 </div>
 
@@ -622,6 +575,51 @@ export default function PrintSettings() {
         ]}
       />
 
+      <Modal
+        title={currentArea._id ? "Edit Print Area" : "Add Print Area"}
+        open={isAreaModalOpen}
+        onCancel={() => setIsAreaModalOpen(false)}
+        onOk={handleSaveAreaModal}
+        okText="Save Area"
+        centered
+        width={600}
+        styles={{ content: { border: '1px solid #333' } }}
+        okButtonProps={{ type: 'primary', style: { color: '#000', fontWeight: 600 } }}
+        cancelButtonProps={{ style: { backgroundColor: 'transparent' } }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '16px 0' }}>
+          <Row gutter={16}>
+            <Col span={16}>
+              <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Zone Name</Text>
+              <Input 
+                value={currentArea.name} 
+                onChange={e => setCurrentArea({...currentArea, name: e.target.value})}
+                placeholder="e.g. Center Chest"
+              />
+            </Col>
+            <Col span={8}>
+              <Text style={{ display: 'block', marginBottom: '8px', fontSize: '12px', textTransform: 'uppercase' }}>Price (₹)</Text>
+              <Input 
+                type="number" 
+                value={currentArea.cost} 
+                onChange={e => setCurrentArea({...currentArea, cost: Number(e.target.value)})}
+              />
+            </Col>
+          </Row>
+
+          <Checkbox 
+            checked={currentArea.isActive} 
+            onChange={e => setCurrentArea({...currentArea, isActive: e.target.checked})}
+          >
+            <Text>Active (Visible to users)</Text>
+          </Checkbox>
+
+          <PrintAreaSelector 
+            value={currentArea.boundingBox}
+            onChange={(boundingBox) => setCurrentArea({ ...currentArea, boundingBox })}
+          />
+        </div>
+      </Modal>
       
     </div>
   );

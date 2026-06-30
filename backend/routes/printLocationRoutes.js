@@ -7,15 +7,14 @@ router.get('/', async (req, res) => {
   try {
     let locations = await PrintLocation.find().sort({ createdAt: 1 });
     
-    // Auto-seed if empty
     if (locations.length === 0) {
       const defaultLocations = [
-        { name: 'Left Chest Logo', cost: 20 },
-        { name: '15 × 7 cm Chest Design', cost: 35 },
-        { name: 'A4 Print', cost: 50 },
-        { name: 'A3 Print', cost: 80 },
-        { name: 'Sleeve Print', cost: 30 },
-        { name: 'Front + Back Print', cost: 120 }
+        { name: 'Left Chest Logo', cost: 20, boundingBox: { top: 30, left: 60, width: 10, height: 10 } },
+        { name: '15 × 7 cm Chest Design', cost: 35, boundingBox: { top: 32, left: 40, width: 20, height: 10 } },
+        { name: 'A4 Print', cost: 50, boundingBox: { top: 40, left: 32.5, width: 35, height: 40 } },
+        { name: 'A3 Print', cost: 80, boundingBox: { top: 35, left: 27.5, width: 45, height: 55 } },
+        { name: 'Sleeve Print', cost: 30, boundingBox: { top: 45, left: 25, width: 15, height: 20 } },
+        { name: 'Front + Back Print', cost: 120, boundingBox: { top: 40, left: 32.5, width: 35, height: 40 } }
       ];
       await PrintLocation.insertMany(defaultLocations);
       locations = await PrintLocation.find().sort({ createdAt: 1 });

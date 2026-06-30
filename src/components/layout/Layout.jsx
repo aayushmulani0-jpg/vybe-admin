@@ -24,6 +24,7 @@ export default function Layout() {
       
       {/* Confirm Modal */}
       <Modal
+        zIndex={9999}
         open={!!confirmModal}
         onCancel={() => {
           if (confirmModal?.onCancel) confirmModal.onCancel();
@@ -50,6 +51,7 @@ export default function Layout() {
       
       {/* Alert Modal */}
       <Modal
+        zIndex={9999}
         open={!!alertModal}
         onCancel={closeAlert}
         onOk={closeAlert}
