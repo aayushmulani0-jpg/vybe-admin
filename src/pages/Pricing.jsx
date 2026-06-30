@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, Plus, Trash2, DollarSign } from 'lucide-react';
 import { useUIStore } from '../store/useUIStore';
-const API_URL = 'http://localhost:5000/api';
+import { API_URL } from '../config';
 
 export default function Pricing() {
   const [pricingConfigs, setPricingConfigs] = useState([]);

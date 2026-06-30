@@ -1,6 +1,7 @@
 import { create } from 'zustand';
+import { API_URL as BASE_API_URL } from '../config';
 
-const API_URL = 'http://localhost:5000/api/orders';
+const API_URL = `${BASE_API_URL}/orders`;
 
 export const useOrderStore = create((set, get) => ({
   retailOrders: [],

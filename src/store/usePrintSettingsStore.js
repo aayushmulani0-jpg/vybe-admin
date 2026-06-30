@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-const API_URL = 'http://localhost:5000/api';
+import { API_URL } from '../config';
 
 export const usePrintSettingsStore = create((set, get) => ({
   printLocations: [],

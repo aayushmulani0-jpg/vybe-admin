@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-
-const API_URL = 'http://localhost:5000/api/catalogues';
+import { useUIStore } from './useUIStore';
+import { API_URL as BASE_API_URL } from '../config';
+const API_URL = `${BASE_API_URL}/catalogues`;
 
 export const useCatalogueStore = create((set, get) => ({
   catalogues: [],
@@ -84,10 +85,10 @@ export const useCatalogueStore = create((set, get) => ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(cat),
       });
-      alert('Catalogue saved successfully!');
+      useUIStore.getState().alert('Catalogue saved successfully!', 'success', 'Saved');
     } catch (error) {
       console.error(error);
-      alert('Failed to save catalogue');
+      useUIStore.getState().alert('Failed to save catalogue', 'error', 'Error');
     }
   },
 
