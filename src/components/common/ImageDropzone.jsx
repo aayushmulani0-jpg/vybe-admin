@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react';
-import { UploadCloud, X } from 'lucide-react';
+import { UploadCloud, X, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { API_URL } from '../../config';
 
 export default function ImageDropzone({ value, onChange }) {
   const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleDragOver = (e) => {
@@ -33,11 +35,30 @@ export default function ImageDropzone({ value, onChange }) {
     }
   };
 
-  const handleFile = (file) => {
-    // In a real app, this would upload to Cloudinary/S3.
-    // Here we create a local object URL for immediate preview.
-    const url = URL.createObjectURL(file);
-    onChange(url);
+  const handleFile = async (file) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const res = await fetch(`${API_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+      
+      const data = await res.json();
+      onChange(data.url);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Failed to upload image. Please try again.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   const clearImage = (e) => {
@@ -72,7 +93,12 @@ export default function ImageDropzone({ value, onChange }) {
           className="hidden"
         />
 
-        {value ? (
+        {isUploading ? (
+          <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400">
+            <Loader2 className="w-8 h-8 mb-3 animate-spin text-vybe-neon" />
+            <p className="mb-1 text-sm font-semibold text-white">Uploading...</p>
+          </div>
+        ) : value ? (
           <>
             <img src={value} alt="Preview" className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
