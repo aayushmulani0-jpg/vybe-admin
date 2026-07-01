@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import { useUIStore } from '../store/useUIStore';
 import { Eye, FileText, Search, X } from 'lucide-react';
-import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal } from 'antd';
+import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal, message } from 'antd';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
+import InvoiceTemplate from '../components/orders/InvoiceTemplate';
 
 const { Title, Text } = Typography;
 
@@ -40,6 +43,121 @@ export default function RetailOrders() {
       case 'Cancelled': return 'error';
       default: return 'default';
     }
+  };
+
+  const handleDownloadInvoice = () => {
+    if (!selectedOrder) return;
+    const elementToBeCaptured = document.getElementById("master_order_invoice");
+    if (!elementToBeCaptured) {
+      message.error("Failed to download invoice!");
+      return;
+    }
+    const a4Width = 595.28;
+    const a4Height = 841.89;
+    const loadingMessage = message.loading("Generating PDF...", 0);
+    const dpi = 300 / 72;
+    
+    const contentHeight = Math.ceil(elementToBeCaptured.getBoundingClientRect().height) || 841;
+    const contentWidth = Math.ceil(elementToBeCaptured.getBoundingClientRect().width) || 595;
+    
+    const scaleWidth = (a4Width * dpi) / contentWidth;
+    const scaleHeight = (a4Height * dpi) / contentHeight;
+    const scale = Math.min(scaleWidth, scaleHeight) * 0.95;
+    const options = {
+      scale: scale,
+      useCORS: true,
+      logging: false,
+      allowTaint: true,
+      backgroundColor: "#FFFFFF",
+      width: contentWidth,
+      height: contentHeight,
+      windowWidth: contentWidth,
+      windowHeight: contentHeight,
+      scrollX: 0,
+      scrollY: 0,
+      x: 0,
+      y: 0,
+      onclone: (clonedDoc) => {
+        const clonedElement = clonedDoc.getElementById("master_order_invoice");
+        if (clonedElement) {
+          clonedElement.style.transform = "none";
+          clonedElement.style.transformOrigin = "top left";
+          clonedElement.style.width = `${contentWidth}px`;
+          clonedElement.style.height = `${contentHeight}px`;
+
+          clonedElement.style.fontDisplay = "swap";
+          clonedElement.style.webkitFontSmoothing = "antialiased";
+          clonedElement.style.mozOsxFontSmoothing = "grayscale";
+          clonedElement.style.textRendering = "optimizeLegibility";
+
+          const images = clonedElement.getElementsByTagName("img");
+          Array.from(images).forEach((img) => {
+            img.style.imageRendering = "high-quality";
+          });
+        }
+      },
+    };
+
+    html2canvas(elementToBeCaptured, options)
+      .then((canvas) => {
+        const pdf = new jsPDF({
+          orientation: "portrait",
+          unit: "pt",
+          format: "a4",
+          compress: true,
+          precision: 16,
+        });
+
+        const scaledWidth = contentWidth * (scale / dpi);
+        const scaledHeight = contentHeight * (scale / dpi);
+        const xPosition = Math.max(0, (a4Width - scaledWidth) / 2);
+        const yPosition = Math.max(0, (a4Height - scaledHeight) / 2);
+
+        pdf.addImage(
+          canvas.toDataURL("image/jpeg", 1.0),
+          "JPEG",
+          xPosition,
+          yPosition,
+          scaledWidth,
+          scaledHeight,
+          undefined,
+          "FAST",
+          0,
+        );
+
+        const blob = pdf.output("blob");
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `Invoice_${selectedOrder.id}.pdf`;
+
+        link.onload = () => {
+          loadingMessage();
+          message.success("PDF generated successfully!");
+          URL.revokeObjectURL(url);
+        };
+
+        link.onerror = () => {
+          loadingMessage();
+          message.error("Failed to download PDF");
+          URL.revokeObjectURL(url);
+        };
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => {
+          loadingMessage();
+          message.success("PDF generated successfully!");
+          URL.revokeObjectURL(url);
+        }, 100);
+      })
+      .catch((error) => {
+        loadingMessage();
+        message.error("Failed to capture invoice");
+      });
   };
 
   const filteredOrders = retailOrders.filter((order) => {
@@ -156,7 +274,7 @@ export default function RetailOrders() {
           <Button key="close" onClick={() => setSelectedOrder(null)} style={{ backgroundColor: 'transparent'}}>
             Close
           </Button>,
-          <Button key="invoice" type="primary" icon={<FileText size={16} />} style={{ fontWeight: 600, color: '#000' }}>
+          <Button key="invoice" type="primary" onClick={handleDownloadInvoice} icon={<FileText size={16} />} style={{ fontWeight: 600, color: '#000' }}>
             Download Invoice
           </Button>
         ]}
@@ -271,6 +389,11 @@ export default function RetailOrders() {
                 </Card>
               </Col>
             </Row>
+
+            {/* Hidden component for capturing invoice */}
+            <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', opacity: 0, pointerEvents: 'none' }}>
+              <InvoiceTemplate order={selectedOrder} />
+            </div>
           </div>
         )}
       </Modal>
