@@ -15,6 +15,25 @@ const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
   process.env.CLOUDINARY_API_KEY && 
   process.env.CLOUDINARY_API_SECRET;
 
+const fileFilter = (req, file, cb) => {
+  const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.svg'];
+  const ext = path.extname(file.originalname).toLowerCase();
+  
+  if (!file.mimetype.startsWith('image/')) {
+    return cb(new Error('Only image files are allowed!'), false);
+  }
+  
+  if (allowed.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid image format. Allowed: jpg, png, jpeg, webp, svg'), false);
+  }
+};
+
+const limits = {
+  fileSize: 3 * 1024 * 1024, // Strict 3MB limit
+};
+
 let upload;
 
 if (hasCloudinary) {
@@ -36,7 +55,11 @@ if (hasCloudinary) {
     },
   });
 
-  upload = multer({ storage: cloudStorage });
+  upload = multer({ 
+    storage: cloudStorage,
+    fileFilter,
+    limits
+  });
 } else {
   // Fallback: use local disk storage
   const diskStorage = multer.diskStorage({
@@ -49,15 +72,8 @@ if (hasCloudinary) {
 
   upload = multer({ 
     storage: diskStorage,
-    fileFilter: (req, file, cb) => {
-      const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.svg'];
-      const ext = path.extname(file.originalname).toLowerCase();
-      if (allowed.includes(ext)) {
-        cb(null, true);
-      } else {
-        cb(new Error('Invalid file type. Allowed: jpg, png, jpeg, webp, svg'));
-      }
-    }
+    fileFilter,
+    limits
   });
 }
 

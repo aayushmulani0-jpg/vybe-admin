@@ -36,6 +36,16 @@ export default function ImageDropzone({ value, onChange }) {
   };
 
   const handleFile = async (file) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Only image files are allowed!');
+      return;
+    }
+    
+    if (file.size > 3 * 1024 * 1024) {
+      alert('File size exceeds the 3MB limit. Please choose a smaller image.');
+      return;
+    }
+
     setIsUploading(true);
     try {
       const formData = new FormData();
@@ -115,7 +125,7 @@ export default function ImageDropzone({ value, onChange }) {
           <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400">
             <UploadCloud className={clsx("w-8 h-8 mb-3 transition-colors", isDragging && "text-vybe-neon")} />
             <p className="mb-1 text-sm"><span className="font-semibold text-white">Click to upload</span> or drag and drop</p>
-            <p className="text-xs">SVG, PNG, JPG or WEBP (MAX. 5MB)</p>
+            <p className="text-xs">SVG, PNG, JPG or WEBP (MAX. 3MB)</p>
           </div>
         )}
       </div>
