@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import { useUIStore } from '../store/useUIStore';
-import { Package, Eye, Send, Search, X } from 'lucide-react';
+import { Eye, Send, Search, X } from 'lucide-react';
 import MockupViewer from '../components/custom-print/MockupViewer';
 import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal } from 'antd';
 
@@ -31,7 +31,6 @@ export default function WholesaleOrders() {
   }, [selectedOrder]);
 
   const WHOLESALE_STATUSES = ['Inquiry', 'Quotation Sent', 'Payment Pending', 'Production', 'Ready To Ship', 'Shipped', 'Delivered'];
-  const PAYMENT_STATUSES = ['Pending', 'Advance Paid', 'Paid in Full', 'Failed'];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -42,16 +41,6 @@ export default function WholesaleOrders() {
       case 'Quotation Sent': return 'cyan';
       default: return 'default';
     }
-  };
-
-  const getStatusIndex = (status) => {
-    return Math.max(0, WHOLESALE_STATUSES.indexOf(status));
-  };
-
-  const handleUpdateShipping = () => {
-    updateOrderDetails(selectedOrder.id, 'Wholesale', { shippingDetails: editShipping });
-    setSelectedOrder({ ...selectedOrder, shippingDetails: editShipping });
-    alert('Logistics details updated.', 'success', 'Success');
   };
 
   const filteredOrders = wholesaleOrders.filter((order) => {

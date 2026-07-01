@@ -28,10 +28,18 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await registerAdmin(name, email, password);
-      navigate('/');
-    } catch (err) {
-      // Error handled by store
+      const res = await registerAdmin(name, email, password);
+      const data = await res.json();
+      if (res.ok) {
+        setToken(data.token);
+        setUser(data.user);
+        message.success('Registration successful!');
+        navigate('/');
+      } else {
+        message.error(data.message || 'Registration failed');
+      }
+    } catch {
+      message.error('An error occurred during registration');
     }
   };
 

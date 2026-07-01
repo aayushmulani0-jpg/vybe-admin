@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCustomPrintStore } from '../store/useCustomPrintStore';
 import { useSettingsStore } from '../store/useSettingsStore';
-import { Palette, Eye, Download, X, Settings, Search, Save } from 'lucide-react';
+import { Eye, Download, X, Settings, Search, Save } from 'lucide-react';
 import MockupViewer from '../components/custom-print/MockupViewer';
 import PrintSettings from './PrintSettings';
 import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal } from 'antd';
@@ -10,7 +10,7 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export default function CustomPrint() {
-  const { customOrders, updateOrderStatus, fetchCustomOrders, isLoading } = useCustomPrintStore();
+  const { customOrders, fetchCustomOrders, isLoading } = useCustomPrintStore();
   const { settings, fetchSettings, updateSettings } = useSettingsStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -38,17 +38,6 @@ export default function CustomPrint() {
       }
     });
     setIsSavingNotice(false);
-  };
-
-  const CUSTOM_STATUSES = ['New Order', 'Printing', 'Completed'];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Completed': return 'success';
-      case 'Printing': return 'processing';
-      case 'New Order': return 'warning';
-      default: return 'default';
-    }
   };
 
   const filteredOrders = customOrders.filter((order) => {

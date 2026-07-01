@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useCustomerStore } from '../store/useCustomerStore';
-import { Users, Eye, X, Mail, ShoppingBag, TrendingUp, Calendar, MapPin, Tag, Search } from 'lucide-react';
+import { Eye, X, Mail, ShoppingBag, Calendar, MapPin, Tag, Search } from 'lucide-react';
 import { Table, Card, Input, Button, Tag as AntTag, Typography, Row, Col, Space, Empty, Modal } from 'antd';
 
 const { Title, Text } = Typography;

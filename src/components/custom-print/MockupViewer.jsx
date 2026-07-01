@@ -1,4 +1,3 @@
-import React from 'react';
 
 const TSHIRT_MOCKUP = "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800";
 

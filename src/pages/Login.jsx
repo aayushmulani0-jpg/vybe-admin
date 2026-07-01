@@ -11,7 +11,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   
-  const { login, loading, error, checkAdminExists, hasAdmin } = useAdminAuthStore();
+  const { login, loading, setLoading, checkAdminExists, hasAdmin } = useAdminAuthStore();
 
   useEffect(() => {
     checkAdminExists();
@@ -19,11 +19,24 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      await login(email, password);
-      navigate('/');
-    } catch (err) {
-      // Error handled by store
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        message.success('Login successful!');
+        navigate('/');
+      } else {
+        message.error(data.message || 'Login failed');
+      }
+    } catch {
+      message.error('An error occurred during login');
+    } finally {
+      setLoading(false);
     }
   };
 

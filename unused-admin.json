@@ -1,0 +1,127 @@
+[
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\pages\\CustomPrint.jsx",
+    "errors": [
+      {
+        "line": 13,
+        "col": 25,
+        "message": "'updateOrderStatus' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "line": 43,
+        "col": 9,
+        "message": "'CUSTOM_STATUSES' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "line": 45,
+        "col": 9,
+        "message": "'getStatusColor' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\pages\\Login.jsx",
+    "errors": [
+      {
+        "line": 25,
+        "col": 14,
+        "message": "'err' is defined but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\pages\\PrintSettings.jsx",
+    "errors": [
+      {
+        "line": 13,
+        "col": 48,
+        "message": "'updateLocation' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\pages\\Register.jsx",
+    "errors": [
+      {
+        "line": 33,
+        "col": 14,
+        "message": "'err' is defined but never used."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\pages\\RetailOrders.jsx",
+    "errors": [
+      {
+        "line": 34,
+        "col": 9,
+        "message": "'PAYMENT_STATUSES' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "line": 46,
+        "col": 9,
+        "message": "'getStatusIndex' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "line": 50,
+        "col": 9,
+        "message": "'handleUpdateShipping' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\pages\\WholesaleOrders.jsx",
+    "errors": [
+      {
+        "line": 34,
+        "col": 9,
+        "message": "'PAYMENT_STATUSES' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "line": 47,
+        "col": 9,
+        "message": "'getStatusIndex' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "line": 51,
+        "col": 9,
+        "message": "'handleUpdateShipping' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\store\\useCatalogueStore.js",
+    "errors": [
+      {
+        "line": 41,
+        "col": 13,
+        "message": "'updatedCat' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      },
+      {
+        "line": 56,
+        "col": 13,
+        "message": "'updatedCat' is assigned a value but never used. Allowed unused vars must match /^_/u."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\store\\useOrderStore.js",
+    "errors": [
+      {
+        "line": 6,
+        "col": 43,
+        "message": "'get' is defined but never used. Allowed unused args must match /^_/u."
+      }
+    ]
+  },
+  {
+    "path": "E:\\ayush\\vybe-admin\\src\\store\\usePrintSettingsStore.js",
+    "errors": [
+      {
+        "line": 4,
+        "col": 51,
+        "message": "'get' is defined but never used. Allowed unused args must match /^_/u."
+      }
+    ]
+  }
+]

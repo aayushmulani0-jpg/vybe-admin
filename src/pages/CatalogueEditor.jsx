@@ -3,7 +3,7 @@ import { useCatalogueStore } from '../store/useCatalogueStore';
 import { useProductStore } from '../store/useProductStore';
 import { BookOpen, Trash2, Plus, CheckCircle, Globe, X, ArrowLeft, Settings2, Settings, Search } from 'lucide-react';
 import WholesalePrintSettingsModal from '../components/catalogue/WholesalePrintSettingsModal';
-import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal, Badge } from 'antd';
+import { Table, Card, Input, Button, Tag, Typography, Row, Col, Empty, Modal } from 'antd';
 
 const { Title, Text } = Typography;
 

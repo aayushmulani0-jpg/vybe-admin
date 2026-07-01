@@ -37,8 +37,7 @@ export const useCatalogueStore = create((set, get) => ({
 
   setLiveCatalogue: async (id) => {
     try {
-      const res = await fetch(`${API_URL}/${id}/live`, { method: 'PUT' });
-      const updatedCat = await res.json();
+      await fetch(`${API_URL}/${id}/live`, { method: 'PUT' });
       set((state) => ({
         catalogues: state.catalogues.map(c => ({
           ...c,
@@ -52,8 +51,7 @@ export const useCatalogueStore = create((set, get) => ({
 
   setOfflineCatalogue: async (id) => {
     try {
-      const res = await fetch(`${API_URL}/${id}/offline`, { method: 'PUT' });
-      const updatedCat = await res.json();
+      await fetch(`${API_URL}/${id}/offline`, { method: 'PUT' });
       set((state) => ({
         catalogues: state.catalogues.map(c => ({
           ...c,

@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useOrderStore } from '../store/useOrderStore';
 import { useUIStore } from '../store/useUIStore';
-import { ShoppingCart, Eye, FileText, Search, X } from 'lucide-react';
-import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal, Badge } from 'antd';
+import { Eye, FileText, Search, X } from 'lucide-react';
+import { Table, Card, Input, Button, Tag, Typography, Row, Col, Space, Empty, Modal } from 'antd';
 
 const { Title, Text } = Typography;
 
@@ -31,7 +31,6 @@ export default function RetailOrders() {
   }, [selectedOrder]);
 
   const RETAIL_STATUSES = ['Pending', 'Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled'];
-  const PAYMENT_STATUSES = ['Pending', 'Paid', 'Failed'];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -41,16 +40,6 @@ export default function RetailOrders() {
       case 'Cancelled': return 'error';
       default: return 'default';
     }
-  };
-
-  const getStatusIndex = (status) => {
-    return RETAIL_STATUSES.indexOf(status);
-  };
-
-  const handleUpdateShipping = () => {
-    updateOrderDetails(selectedOrder.id, 'Retail', { shippingDetails: editShipping });
-    setSelectedOrder({ ...selectedOrder, shippingDetails: editShipping });
-    alert('Tracking details updated.', 'success', 'Success');
   };
 
   const filteredOrders = retailOrders.filter((order) => {
