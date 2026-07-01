@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { usePrintSettingsStore } from '../../store/usePrintSettingsStore';
 import { Save, MapPin, Layers } from 'lucide-react';
 import { Table, Button, Typography, Input, Checkbox, Tabs, Modal, Spin } from 'antd';
+import { API_URL } from '../../config';
 
 const { Title, Text } = Typography;
 
@@ -23,7 +24,7 @@ export default function WholesalePrintSettingsModal({ catalogue, onSave, onClose
   const fetchTemplates = async () => {
     setIsLoadingTemplates(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/templates`);
+      const res = await fetch(`${API_URL}/templates`);
       if (res.ok) setGlobalTemplates(await res.json());
     } catch (err) {
       console.error(err);
