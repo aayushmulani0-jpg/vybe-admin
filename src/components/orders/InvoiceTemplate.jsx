@@ -1,6 +1,15 @@
 import React from 'react';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 export default function InvoiceTemplate({ order, documentType = 'INVOICE' }) {
+  const { settings, fetchSettings } = useSettingsStore();
+
+  React.useEffect(() => {
+    if (!settings) {
+      fetchSettings();
+    }
+  }, [settings, fetchSettings]);
+
   if (!order) return null;
 
   const items = order.itemsList || [];
@@ -13,6 +22,8 @@ export default function InvoiceTemplate({ order, documentType = 'INVOICE' }) {
   const primaryColor = '#111111';
   const secondaryColor = '#444444';
   const borderColor = '#dddddd';
+
+  const policyText = `Thank you for choosing Vybe!\nYour ${documentType.toLowerCase()} has been generated successfully.\nIf you have any questions concerning this ${documentType.toLowerCase()}, please contact our support team.`;
 
   return (
     <div
@@ -133,13 +144,22 @@ export default function InvoiceTemplate({ order, documentType = 'INVOICE' }) {
 
       {/* Payment Status & Footer */}
       <div style={{ marginTop: 'auto', paddingTop: '40px' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 'bold', color: primaryColor, marginBottom: '8px' }}>Payment Information</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ color: secondaryColor }}>Status:</span>
+            {order.paymentStatus === 'Paid' ? (
+              <span style={{ backgroundColor: '#e6f4ea', color: '#1e8e3e', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #1e8e3e' }}>PAID</span>
+            ) : (
+              <span style={{ backgroundColor: '#fce8e6', color: '#d93025', padding: '4px 12px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', border: '1px solid #d93025', textTransform: 'uppercase' }}>{order.paymentStatus || 'PENDING'}</span>
+            )}
+          </div>
+        </div>
 
         <div style={{ borderTop: `1px solid ${borderColor}`, margin: '30px 0' }}></div>
 
-        <div style={{ textAlign: 'center', color: secondaryColor, fontSize: '12px', lineHeight: '1.6' }}>
-          <strong>Thank you for choosing Vybe!</strong><br />
-          Your {documentType.toLowerCase()} has been generated successfully.<br />
-          If you have any questions concerning this {documentType.toLowerCase()}, please contact our support team.
+        <div style={{ textAlign: 'center', color: secondaryColor, fontSize: '12px', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+          {policyText}
         </div>
       </div>
     </div>

@@ -9,6 +9,7 @@ router.get('/', async (req, res) => {
     if (!settings) {
       settings = await Setting.create({});
     }
+
     res.json({ success: true, settings });
   } catch (error) {
     console.error('Error fetching settings:', error);
@@ -29,6 +30,11 @@ router.put('/', async (req, res) => {
   } catch (error) {
     console.error('Error updating settings:', error);
     res.status(500).json({ success: false, message: 'Server error updating settings' });
+  }
+});
+
+module.exports = router;
+res.status(500).json({ success: false, message: 'Server error updating settings' });
   }
 });
 

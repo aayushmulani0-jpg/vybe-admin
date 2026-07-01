@@ -25,7 +25,7 @@ export const useSettingsStore = create((set) => ({
       const token = localStorage.getItem('vybe-admin-token');
       const res = await fetch(`${API_URL}/settings`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },

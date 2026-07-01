@@ -252,4 +252,33 @@ router.delete('/me/addresses/:id', protect, async (req, res) => {
   }
 });
 
+// @route   PUT /api/auth/me/addresses/:id
+// @desc    Update an address for the current user
+// @access  Private
+router.put('/me/addresses/:id', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    const addressId = req.params.id;
+    const updateData = req.body;
+    
+    if (updateData.isDefault) {
+      user.addresses.forEach(a => a.isDefault = false);
+    }
+    
+    const addrIndex = user.addresses.findIndex(a => a._id.toString() === addressId);
+    if (addrIndex !== -1) {
+      user.addresses[addrIndex] = { ...user.addresses[addrIndex].toObject(), ...updateData };
+      user.markModified('addresses');
+      await user.save();
+    }
+    
+    res.json(user.addresses);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error updating address' });
+  }
+});
+
 module.exports = router;
