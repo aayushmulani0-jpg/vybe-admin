@@ -2,6 +2,15 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
+    // Listen for events before connecting
+    mongoose.connection.on('disconnected', () => {
+      console.warn('MongoDB disconnected! Attempting to reconnect...');
+    });
+
+    mongoose.connection.on('error', (err) => {
+      console.error(`MongoDB connection error: ${err.message}`);
+    });
+
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {

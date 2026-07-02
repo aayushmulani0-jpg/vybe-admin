@@ -1,17 +1,50 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const morgan = require('morgan');
 const connectDB = require('./db');
+const path = require('path');
+
+// Handle uncaught exceptions gracefully
+process.on('uncaughtException', (err) => {
+  console.error('UNCAUGHT EXCEPTION! 💥 Shutting down...');
+  console.error(err.name, err.message, err.stack);
+  process.exit(1);
+});
 
 // Connect to MongoDB
 connectDB();
 
-const path = require('path');
-
 const app = express();
 
-// Middleware
-app.use(cors());
+// Security HTTP headers
+app.use(helmet());
+
+// Request logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined'));
+}
+
+// Rate limiting: max 1000 requests per hour from same IP
+const limiter = rateLimit({
+  max: 1000,
+  windowMs: 60 * 60 * 1000, // 1 hour
+  message: 'Too many requests from this IP, please try again in an hour!'
+});
+app.use('/api', limiter);
+
+// CORS configuration
+const corsOptions = {
+  origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : '*',
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
+// Body parser
 app.use(express.json({ limit: '50mb' }));
 
 // Serve uploaded files
@@ -37,5 +70,29 @@ app.use('/api/banners', require('./routes/bannerRoutes'));
 app.use('/api/collections', require('./routes/collectionRoutes'));
 app.use('/api/settings', require('./routes/settingRoutes'));
 
+// Global Error Handling Middleware
+app.use((err, req, res, next) => {
+  console.error('ERROR 💥', err);
+  
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
+
+  res.status(statusCode).json({
+    status: 'error',
+    statusCode,
+    message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Handle unhandled promise rejections gracefully
+process.on('unhandledRejection', (err) => {
+  console.error('UNHANDLED REJECTION! 💥 Shutting down...');
+  console.error(err.name, err.message, err.stack);
+  server.close(() => {
+    process.exit(1);
+  });
+});

@@ -36,7 +36,8 @@ const userSchema = new mongoose.Schema({
     zipCode: { type: String, required: true },
     phone: { type: String },
     isDefault: { type: Boolean, default: false }
-  }]
+  }],
+  activeTokens: [{ type: String }]
 }, {
   timestamps: true
 });

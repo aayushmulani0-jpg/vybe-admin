@@ -9,9 +9,10 @@ const { Title, Text } = Typography;
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const navigate = useNavigate();
   
-  const { login, loading, setLoading, checkAdminExists, hasAdmin } = useAdminAuthStore();
+  const { login, verifyOtp, loading, error, hasAdmin, checkAdminExists, requiresOtp } = useAdminAuthStore();
 
   useEffect(() => {
     checkAdminExists();
@@ -19,26 +20,22 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        message.success('Login successful!');
-        navigate('/');
+      if (requiresOtp) {
+        await verifyOtp(otp);
       } else {
-        message.error(data.message || 'Login failed');
+        await login(email, password);
       }
-    } catch {
-      message.error('An error occurred during login');
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      // Error is handled by store and displayed via {error}
     }
   };
+
+  useEffect(() => {
+    if (useAdminAuthStore.getState().user) {
+      navigate('/');
+    }
+  }, [navigate, requiresOtp]); // Also re-check when requiresOtp changes just in case
 
   return (
     <div className="min-h-screen bg-vybe-dark flex flex-col justify-center items-center p-4">
@@ -58,32 +55,49 @@ export default function Login() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
-            <Input 
-              size="large"
-              prefix={<Mail className="w-5 h-5 text-gray-500" />}
-              type="email" 
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@vybe.com"
-              
-            />
-          </div>
+          {!requiresOtp ? (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
+                <Input 
+                  size="large"
+                  prefix={<Mail className="w-5 h-5 text-gray-500" />}
+                  type="email" 
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@vybe.com"
+                />
+              </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
-            <Input.Password 
-              size="large"
-              prefix={<Lock className="w-5 h-5 text-gray-500" />}
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              
-            />
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                <Input.Password 
+                  size="large"
+                  prefix={<Lock className="w-5 h-5 text-gray-500" />}
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                />
+              </div>
+            </>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">Enter 6-Digit OTP</label>
+              <Input 
+                size="large"
+                prefix={<Lock className="w-5 h-5 text-vybe-neon" />}
+                required
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                placeholder="696969"
+                maxLength={6}
+                style={{ textAlign: 'center', letterSpacing: '4px', fontSize: '18px' }}
+              />
+              <p className="text-xs text-gray-400 mt-2 text-center">Please enter your 2-step verification code.</p>
+            </div>
+          )}
 
           <Button 
             type="primary" 
@@ -93,7 +107,7 @@ export default function Login() {
             loading={loading}
             style={{ marginTop: 16, height: 48, fontWeight: 500, color: '#000' }}
           >
-            {loading ? 'Authenticating...' : 'Secure Login'}
+            {loading ? 'Authenticating...' : requiresOtp ? 'Verify OTP' : 'Secure Login'}
           </Button>
         </form>
 

@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require('express'); // Restart backend for auth changes
 const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
@@ -105,7 +105,7 @@ router.post('/register-admin', async (req, res) => {
 // @route   POST /api/auth/login
 // @desc    Login user
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, isAdminLogin } = req.body;
   try {
     const user = await User.findOne({ email });
     if (!user) {
@@ -121,6 +121,14 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    if (isAdminLogin) {
+      if (user.role !== 'admin') {
+        return res.status(403).json({ message: 'Access denied. Admin role required.' });
+      }
+      const tempToken = jwt.sign({ tempId: user._id }, JWT_SECRET, { expiresIn: '5m' });
+      return res.json({ requiresOtp: true, tempToken });
+    }
+
     res.json({
       _id: user._id,
       name: user.name,
@@ -130,6 +138,57 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/verify-otp
+// @desc    Verify OTP for admin login
+router.post('/verify-otp', async (req, res) => {
+  const { tempToken, otp } = req.body;
+  if (otp !== '696969') {
+    return res.status(400).json({ message: 'Invalid OTP' });
+  }
+  
+  try {
+    const decoded = jwt.verify(tempToken, JWT_SECRET);
+    const user = await User.findById(decoded.tempId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    
+    if (user.activeTokens && user.activeTokens.length >= 2) {
+      return res.status(403).json({ message: 'Maximum 2 active sessions allowed. Please log out from another device.' });
+    }
+    
+    const finalToken = generateToken(user._id);
+    
+    user.activeTokens = user.activeTokens || [];
+    user.activeTokens.push(finalToken);
+    await user.save();
+    
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: finalToken
+    });
+  } catch (err) {
+    res.status(401).json({ message: 'Session expired or invalid token' });
+  }
+});
+
+// @route   POST /api/auth/logout
+// @desc    Logout admin and free session
+router.post('/logout', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (user) {
+      const token = req.headers.authorization.split(' ')[1];
+      user.activeTokens = (user.activeTokens || []).filter(t => t !== token);
+      await user.save();
+    }
+    res.json({ message: 'Logged out successfully' });
+  } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
 });
