@@ -277,6 +277,7 @@ router.get('/me/addresses', protect, async (req, res) => {
 // @access  Private
 router.post('/me/addresses', protect, async (req, res) => {
   try {
+    if (!req.user) return res.status(401).json({ message: 'Not authorized. Please log in again.' });
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
     

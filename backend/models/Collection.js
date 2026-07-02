@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const collectionSchema = new mongoose.Schema({
   name: { type: String, required: true },
-  slug: { type: String, required: true, unique: true },
+  slug: { type: String, required: false, unique: true },
   description: { type: String },
   type: { type: String, required: true },
   bannerImage: { type: String },
