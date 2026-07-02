@@ -35,10 +35,25 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Helper to generate a URL-safe slug
+const generateSlug = (name) => {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-+/g, '-');
+};
+
 // Create collection
 router.post('/', async (req, res) => {
   try {
-    const collection = new Collection(req.body);
+    const data = { ...req.body };
+    // Auto-generate slug from name if not provided
+    if (!data.slug && data.name) {
+      data.slug = generateSlug(data.name) + '-' + Date.now();
+    }
+    const collection = new Collection(data);
     await collection.save();
     res.status(201).json({ success: true, collection });
   } catch (error) {
@@ -49,7 +64,12 @@ router.post('/', async (req, res) => {
 // Update collection
 router.put('/:id', async (req, res) => {
   try {
-    const collection = await Collection.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const data = { ...req.body };
+    // Auto-generate slug from name if not provided
+    if (!data.slug && data.name) {
+      data.slug = generateSlug(data.name) + '-' + Date.now();
+    }
+    const collection = await Collection.findByIdAndUpdate(req.params.id, data, { new: true, runValidators: true });
     res.json({ success: true, collection });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });

@@ -286,11 +286,11 @@ router.post('/me/addresses', protect, async (req, res) => {
     }
     
     user.addresses.push(newAddress);
-    await user.save();
+    await user.save({ validateModifiedOnly: true });
     res.json(user.addresses);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error adding address' });
+    res.status(500).json({ message: `Server error adding address: ${err.message}` });
   }
 });
 
@@ -303,7 +303,7 @@ router.delete('/me/addresses/:id', protect, async (req, res) => {
     if (!user) return res.status(404).json({ message: 'User not found' });
     
     user.addresses = user.addresses.filter(a => a._id.toString() !== req.params.id);
-    await user.save();
+    await user.save({ validateModifiedOnly: true });
     res.json(user.addresses);
   } catch (err) {
     console.error(err);
@@ -330,13 +330,13 @@ router.put('/me/addresses/:id', protect, async (req, res) => {
     if (addrIndex !== -1) {
       user.addresses[addrIndex] = { ...user.addresses[addrIndex].toObject(), ...updateData };
       user.markModified('addresses');
-      await user.save();
+      await user.save({ validateModifiedOnly: true });
     }
     
     res.json(user.addresses);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error updating address' });
+    res.status(500).json({ message: `Server error updating address: ${err.message}` });
   }
 });
 
