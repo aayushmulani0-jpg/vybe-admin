@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { UploadCloud, X, Loader2 } from 'lucide-react';
-import { clsx } from 'clsx';
+import clsx from 'clsx';
 import { API_URL } from '../../config';
 
 export default function ImageDropzone({ value, onChange }) {
