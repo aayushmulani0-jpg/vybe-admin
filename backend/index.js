@@ -19,6 +19,9 @@ connectDB();
 
 const app = express();
 
+// Trust proxy for Render/load balancers so rate limiter gets correct IPs
+app.set('trust proxy', 1);
+
 // Security HTTP headers
 app.use(helmet());
 
@@ -39,7 +42,11 @@ app.use('/api', limiter);
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : '*',
+  // If FRONTEND_URL is set, use it. Otherwise, use a function to reflect the request origin
+  // (which is required when credentials: true is set, because '*' is forbidden).
+  origin: process.env.FRONTEND_URL 
+    ? process.env.FRONTEND_URL.split(',') 
+    : function (origin, callback) { callback(null, true); },
   credentials: true,
 };
 app.use(cors(corsOptions));
