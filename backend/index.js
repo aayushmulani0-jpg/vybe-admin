@@ -44,8 +44,8 @@ app.use('/api', limiter);
 const corsOptions = {
   // If FRONTEND_URL is set, use it. Otherwise, use a function to reflect the request origin
   // (which is required when credentials: true is set, because '*' is forbidden).
-  origin: process.env.FRONTEND_URL 
-    ? process.env.FRONTEND_URL.split(',') 
+  origin: process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',')
     : function (origin, callback) { callback(null, true); },
   credentials: true,
 };
@@ -59,7 +59,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Basic Route
 app.get('/', (req, res) => {
-  res.send('Vybe API is running... (v1.1.0 Optimized)');
+  res.send('Vybe API is running... (v1.2.0 Optimized)');
 });
 
 // Import Routes
@@ -80,7 +80,7 @@ app.use('/api/settings', require('./routes/settingRoutes'));
 // Global Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error('ERROR 💥', err);
-  
+
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
