@@ -34,8 +34,8 @@ export default function WholesalePrintSettingsModal({ catalogue, onSave, onClose
   };
 
   useEffect(() => {
-    if (printLocations.length > 0) {
-      const catalogueLocs = catalogue.wholesaleLocations || [];
+    if (printLocations?.length > 0) {
+      const catalogueLocs = catalogue?.wholesaleLocations || [];
       const mergedLocs = printLocations.map(globalLoc => {
         const override = catalogueLocs.find(cl => cl.locationId === globalLoc._id);
         if (override) {
@@ -53,8 +53,8 @@ export default function WholesalePrintSettingsModal({ catalogue, onSave, onClose
   }, [printLocations, catalogue]);
 
   useEffect(() => {
-    if (globalTemplates.length > 0) {
-      const catalogueTpls = catalogue.wholesaleTemplates || [];
+    if (globalTemplates?.length > 0) {
+      const catalogueTpls = catalogue?.wholesaleTemplates || [];
       const mergedTpls = globalTemplates.map(globalTpl => {
         const override = catalogueTpls.find(ct => ct.templateId === globalTpl._id);
         if (override) {
@@ -93,7 +93,7 @@ export default function WholesalePrintSettingsModal({ catalogue, onSave, onClose
       title: 'Global Retail Price',
       key: 'retailPrice',
       render: (_, record) => {
-        const globalLoc = printLocations.find(gl => gl._id === record.locationId);
+        const globalLoc = printLocations?.find(gl => gl._id === record.locationId);
         return <Text style={{ color: record.isActive ? '#888' : 'rgba(136,136,136,0.5)' }}>₹{globalLoc?.cost || 0}</Text>;
       }},
     {
@@ -126,7 +126,7 @@ export default function WholesalePrintSettingsModal({ catalogue, onSave, onClose
       title: 'Template Name',
       key: 'name',
       render: (_, record) => {
-        const globalTpl = globalTemplates.find(gt => gt._id === record.templateId);
+        const globalTpl = globalTemplates?.find(gt => gt._id === record.templateId);
         return (
           <div>
             <Text strong style={{ color: record.isActive ? '#fff' : 'rgba(255,255,255,0.5)', display: 'block' }}>{record.name}</Text>
