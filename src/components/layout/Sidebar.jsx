@@ -74,6 +74,9 @@ export default function Sidebar() {
         }}
       />
 
+      <div style={{ padding: '8px 24px', fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>
+        v1.1.0 Optimized
+      </div>
       <div style={{ position: 'absolute', bottom: 0, width: '100%', padding: '16px', borderTop: '1px solid #333'}}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>

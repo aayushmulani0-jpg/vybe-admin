@@ -59,7 +59,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Basic Route
 app.get('/', (req, res) => {
-  res.send('Vybe API is running...');
+  res.send('Vybe API is running... (v1.1.0 Optimized)');
 });
 
 // Import Routes
