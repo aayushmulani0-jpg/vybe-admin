@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema({
     phone: { type: String },
     isDefault: { type: Boolean, default: false }
   }],
+  favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
   activeTokens: [{ type: String }]
 }, {
   timestamps: true

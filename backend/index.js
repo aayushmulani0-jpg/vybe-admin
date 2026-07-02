@@ -76,6 +76,7 @@ app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/banners', require('./routes/bannerRoutes'));
 app.use('/api/collections', require('./routes/collectionRoutes'));
 app.use('/api/settings', require('./routes/settingRoutes'));
+app.use('/api/favorites', require('./routes/favoriteRoutes'));
 
 // Global Error Handling Middleware
 app.use((err, req, res, next) => {
