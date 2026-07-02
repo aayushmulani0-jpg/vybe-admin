@@ -142,7 +142,7 @@ export default function WholesalePrintSettingsModal({ catalogue, onSave, onClose
       title: 'Global Retail Price',
       key: 'retailPrice',
       render: (_, record) => {
-        const globalTpl = globalTemplates.find(gt => gt._id === record.templateId);
+        const globalTpl = globalTemplates?.find(gt => gt._id === record.templateId);
         return <Text style={{ color: record.isActive ? '#888' : 'rgba(136,136,136,0.5)' }}>₹{globalTpl?.price || 0}</Text>;
       }},
     {

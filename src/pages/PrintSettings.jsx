@@ -10,7 +10,7 @@ import PrintAreaSelector from '../components/custom-print/PrintAreaSelector';
 const { Title, Text } = Typography;
 
 export default function PrintSettings() {
-  const { locations, fetchLocations, addLocation, deleteLocation, isLoading } = usePrintSettingsStore();
+  const { printLocations, fetchPrintLocations, addLocation, deleteLocation, loading } = usePrintSettingsStore();
   const { settings, fetchSettings, updateSettings } = useSettingsStore();
   const [activeTab, setActiveTab] = useState('areas');
   const { alert, confirm } = useUIStore();
@@ -310,7 +310,7 @@ export default function PrintSettings() {
                     columns={areasColumns}
                     dataSource={localLocations}
                     rowKey="_id"
-                    loading={printLoading}
+                    loading={loading}
                     pagination={false}
                     locale={{
                       emptyText: (
@@ -357,7 +357,7 @@ export default function PrintSettings() {
                             </div>
                           </Col>
                         ) : (
-                          templates.map(template => (
+                          templates?.map(template => (
                             <Col xs={24} md={12} key={template._id}>
                               <Card
                                 style={{ position: 'relative' }}
@@ -384,7 +384,7 @@ export default function PrintSettings() {
                                 <div>
                                   <Text style={{ fontSize: '12px', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>Included Areas</Text>
                                   <Space wrap>
-                                    {template.printAreas.map(p => (
+                                    {template.printAreas?.map(p => (
                                       <Tag key={p.name} color="default" style={{ margin: 0 }}>{p.name}</Tag>
                                     ))}
                                   </Space>
@@ -436,8 +436,8 @@ export default function PrintSettings() {
                     <div style={{ marginBottom: '32px' }}>
                       <Text style={{ display: 'block', marginBottom: '16px', fontSize: '12px', textTransform: 'uppercase' }}>Select Included Print Areas</Text>
                       <Space wrap>
-                        {printLocations.map(area => {
-                          const isSelected = currentTemplate.printAreas.some(p => p.name === area.name);
+                        {printLocations?.map(area => {
+                          const isSelected = currentTemplate.printAreas?.some(p => p.name === area.name);
                           return (
                             <Button
                               key={area._id}
