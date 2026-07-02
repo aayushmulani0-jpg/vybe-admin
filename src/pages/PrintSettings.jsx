@@ -10,7 +10,7 @@ import PrintAreaSelector from '../components/custom-print/PrintAreaSelector';
 const { Title, Text } = Typography;
 
 export default function PrintSettings() {
-  const { printLocations, fetchPrintLocations, addLocation, deleteLocation, loading } = usePrintSettingsStore();
+  const { locations, fetchLocations, addLocation, deleteLocation, isLoading } = usePrintSettingsStore();
   const { settings, fetchSettings, updateSettings } = useSettingsStore();
   const [activeTab, setActiveTab] = useState('areas');
   const { alert, confirm } = useUIStore();
@@ -310,7 +310,7 @@ export default function PrintSettings() {
                     columns={areasColumns}
                     dataSource={localLocations}
                     rowKey="_id"
-                    loading={loading}
+                    loading={printLoading}
                     pagination={false}
                     locale={{
                       emptyText: (
