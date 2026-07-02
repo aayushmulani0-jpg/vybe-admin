@@ -23,7 +23,9 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Security HTTP headers
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
 
 // Request logging
 if (process.env.NODE_ENV === 'development') {
